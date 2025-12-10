@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_SLASH_PENALTY","DEFAULT_WARMUP_COOLDOWN_RATE"],"fn":["check_id","id"],"static":["ID"],"struct":["Config"]};

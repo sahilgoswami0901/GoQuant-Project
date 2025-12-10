@@ -1,0 +1,10 @@
+/Users/sahilgoswami/Desktop/GoQuant Project/collateral-vault/backend/target/debug/deps/actix_cors-01827bf274c92d3d.d: /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/lib.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/all_or_some.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/builder.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/error.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/inner.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/middleware.rs
+
+/Users/sahilgoswami/Desktop/GoQuant Project/collateral-vault/backend/target/debug/deps/libactix_cors-01827bf274c92d3d.rmeta: /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/lib.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/all_or_some.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/builder.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/error.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/inner.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/middleware.rs
+
+/Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/lib.rs:
+/Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/all_or_some.rs:
+/Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/builder.rs:
+/Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/error.rs:
+/Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/inner.rs:
+/Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/actix-cors-0.6.5/src/middleware.rs:

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ALT_BN128_G1_COMPRESS","ALT_BN128_G1_DECOMPRESS","ALT_BN128_G2_COMPRESS","ALT_BN128_G2_DECOMPRESS","G1","G1_COMPRESSED","G2","G2_COMPRESSED"],"fn":["alt_bn128_g1_compress","alt_bn128_g1_decompress","alt_bn128_g2_compress","alt_bn128_g2_decompress","convert_endianness"]};

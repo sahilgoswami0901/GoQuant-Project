@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["add_cpi_accounts_for_execute","invoke_execute"]};

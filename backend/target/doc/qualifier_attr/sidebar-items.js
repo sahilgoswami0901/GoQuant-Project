@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"attr":["field_qualifiers","qualifiers"]};

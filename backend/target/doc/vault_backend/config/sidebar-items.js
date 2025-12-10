@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ConfigError"],"fn":["get_env","get_env_or_default"],"struct":["AppConfig"]};

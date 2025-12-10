@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ACCOUNT_DATA_COST_PAGE_SIZE"],"struct":["FeeBin","FeeBudgetLimits","FeeStructure"]};

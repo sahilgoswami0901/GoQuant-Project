@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ParsableAccount","ParseAccountError"],"fn":["parse_account_data"],"struct":["AccountAdditionalData","PARSABLE_PROGRAM_IDS","ParsedAccount"]};

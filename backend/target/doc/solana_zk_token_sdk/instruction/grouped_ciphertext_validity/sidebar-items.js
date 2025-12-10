@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["GroupedCiphertext2HandlesValidityProofContext","GroupedCiphertext2HandlesValidityProofData"]};

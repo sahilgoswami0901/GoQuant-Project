@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `PoseidonBytesHasher` trait in crate `light_poseidon`."><title>PoseidonBytesHasher in light_poseidon - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="light_poseidon" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../light_poseidon/index.html">light_<wbr>poseidon</a><span class="version">0.2.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Poseidon<wbr>Bytes<wbr>Hasher</a></h2><h3><a href="#required-methods">Required Methods</a></h3><ul class="block"><li><a href="#tymethod.hash_bytes_be" title="hash_bytes_be">hash_bytes_be</a></li><li><a href="#tymethod.hash_bytes_le" title="hash_bytes_le">hash_bytes_le</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate light_<wbr>poseidon</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">light_poseidon</a></div><h1>Trait <span class="trait">PoseidonBytesHasher</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/light_poseidon/lib.rs.html#236-313">Source</a> </span></div><pre class="rust item-decl"><code>pub trait PoseidonBytesHasher {
+    // Required methods
+    fn <a href="#tymethod.hash_bytes_be" class="fn">hash_bytes_be</a>(
+        &amp;mut self,
+        inputs: &amp;[&amp;[<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u8.html">u8</a>]],
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.89.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;[<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u8.html">u8</a>; <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.array.html">32</a>], <a class="enum" href="enum.PoseidonError.html" title="enum light_poseidon::PoseidonError">PoseidonError</a>&gt;;
+<span class="item-spacer"></span>    fn <a href="#tymethod.hash_bytes_le" class="fn">hash_bytes_le</a>(
+        &amp;mut self,
+        inputs: &amp;[&amp;[<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u8.html">u8</a>]],
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.89.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;[<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u8.html">u8</a>; <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.array.html">32</a>], <a class="enum" href="enum.PoseidonError.html" title="enum light_poseidon::PoseidonError">PoseidonError</a>&gt;;
+}</code></pre><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.hash_bytes_be" class="method"><a class="src rightside" href="../src/light_poseidon/lib.rs.html#274">Source</a><h4 class="code-header">fn <a href="#tymethod.hash_bytes_be" class="fn">hash_bytes_be</a>(&amp;mut self, inputs: &amp;[&amp;[<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u8.html">u8</a>]]) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.89.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;[<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u8.html">u8</a>; <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.array.html">32</a>], <a class="enum" href="enum.PoseidonError.html" title="enum light_poseidon::PoseidonError">PoseidonError</a>&gt;</h4></section></summary><div class="docblock"><p>Calculates a Poseidon hash for the given input of big-endian byte slices
+and returns the result as a byte array.</p>
+<h5 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h5>
+<p>Example with two simple big-endian byte inputs and BN254-based
+parameters provided by the library.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>light_poseidon::{Poseidon, PoseidonBytesHasher, parameters::bn254_x5};
+<span class="kw">use </span>ark_bn254::Fr;
+<span class="kw">use </span>ark_ff::{BigInteger, PrimeField};
+
+<span class="kw">let </span><span class="kw-2">mut </span>poseidon = Poseidon::&lt;Fr&gt;::new_circom(<span class="number">2</span>).unwrap();
+
+<span class="kw">let </span>hash = poseidon.hash_bytes_be(<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[<span class="number">1u8</span>; <span class="number">32</span>], <span class="kw-2">&amp;</span>[<span class="number">2u8</span>; <span class="number">32</span>]]).unwrap();
+
+<span class="macro">println!</span>(<span class="string">"{:?}"</span>, hash);
+<span class="comment">// Should print:
+// [
+//     13, 84, 225, 147, 143, 138, 140, 28, 125, 235, 94, 3, 85, 242, 99, 25, 32, 123, 132,
+//     254, 156, 162, 206, 27, 38, 231, 53, 200, 41, 130, 25, 144
+// ]</span></code></pre></div>
+<h5 id="safety"><a class="doc-anchor" href="#safety">§</a>Safety</h5>
+<p>Unlike the
+<a href="../ark_ff/fields/prime/trait.PrimeField.html#method.from_be_bytes_mod_order" title="associated function ark_ff::fields::prime::PrimeField::from_be_bytes_mod_order"><code>PrimeField::from_be_bytes_mod_order</code></a>
+and <a href="../ark_ff/fields/trait.Field.html#method.from_random_bytes" title="associated function ark_ff::fields::Field::from_random_bytes"><code>Field::from_random_bytes</code></a>
+methods, this function ensures that the input byte slice’s length exactly matches
+the modulus size of the prime field. If the size doesn’t match, an error is returned.</p>
+<p>This strict check is designed to prevent unexpected behaviors and collisions
+that might occur when using <code>from_be_bytes_mod_order</code> or <code>from_random_bytes</code>,
+which simply take a subslice of the input if it’s too large, potentially
+leading to collisions.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.hash_bytes_le" class="method"><a class="src rightside" href="../src/light_poseidon/lib.rs.html#312">Source</a><h4 class="code-header">fn <a href="#tymethod.hash_bytes_le" class="fn">hash_bytes_le</a>(&amp;mut self, inputs: &amp;[&amp;[<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u8.html">u8</a>]]) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.89.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;[<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u8.html">u8</a>; <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.array.html">32</a>], <a class="enum" href="enum.PoseidonError.html" title="enum light_poseidon::PoseidonError">PoseidonError</a>&gt;</h4></section></summary><div class="docblock"><p>Calculates a Poseidon hash for the given input of little-endian byte
+slices and returns the result as a byte array.</p>
+<h5 id="examples-1"><a class="doc-anchor" href="#examples-1">§</a>Examples</h5>
+<p>Example with two simple little-endian byte inputs and BN254-based
+parameters provided by the library.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>light_poseidon::{Poseidon, PoseidonBytesHasher, parameters::bn254_x5};
+<span class="kw">use </span>ark_bn254::Fr;
+<span class="kw">use </span>ark_ff::{BigInteger, PrimeField};
+
+<span class="kw">let </span><span class="kw-2">mut </span>poseidon = Poseidon::&lt;Fr&gt;::new_circom(<span class="number">2</span>).unwrap();
+
+<span class="kw">let </span>hash = poseidon.hash_bytes_le(<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[<span class="number">1u8</span>; <span class="number">32</span>], <span class="kw-2">&amp;</span>[<span class="number">2u8</span>; <span class="number">32</span>]]).unwrap();
+
+<span class="macro">println!</span>(<span class="string">"{:?}"</span>, hash);
+<span class="comment">// Should print:
+// [
+//     144, 25, 130, 41, 200, 53, 231, 38, 27, 206, 162, 156, 254, 132, 123, 32, 25, 99, 242,
+//     85, 3, 94, 235, 125, 28, 140, 138, 143, 147, 225, 84, 13
+// ]</span></code></pre></div>
+<h5 id="safety-1"><a class="doc-anchor" href="#safety-1">§</a>Safety</h5>
+<p>Unlike the
+<a href="../ark_ff/fields/prime/trait.PrimeField.html#method.from_le_bytes_mod_order" title="associated function ark_ff::fields::prime::PrimeField::from_le_bytes_mod_order"><code>PrimeField::from_le_bytes_mod_order</code></a>
+and <a href="../ark_ff/fields/trait.Field.html#method.from_random_bytes" title="associated function ark_ff::fields::Field::from_random_bytes"><code>Field::from_random_bytes</code></a>
+methods, this function ensures that the input byte slice’s length exactly matches
+the modulus size of the prime field. If the size doesn’t match, an error is returned.</p>
+<p>This strict check is designed to prevent unexpected behaviors and collisions
+that might occur when using <code>from_be_bytes_mod_order</code> or <code>from_random_bytes</code>,
+which simply take a subslice of the input if it’s too large, potentially
+leading to collisions.</p>
+</div></details></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"><section id="impl-PoseidonBytesHasher-for-Poseidon%3CF%3E" class="impl"><a class="src rightside" href="../src/light_poseidon/lib.rs.html#443-446">Source</a><a href="#impl-PoseidonBytesHasher-for-Poseidon%3CF%3E" class="anchor">§</a><h3 class="code-header">impl&lt;F: <a class="trait" href="../ark_ff/fields/prime/trait.PrimeField.html" title="trait ark_ff::fields::prime::PrimeField">PrimeField</a>&gt; <a class="trait" href="trait.PoseidonBytesHasher.html" title="trait light_poseidon::PoseidonBytesHasher">PoseidonBytesHasher</a> for <a class="struct" href="struct.Poseidon.html" title="struct light_poseidon::Poseidon">Poseidon</a>&lt;F&gt;</h3></section></div><script src="../trait.impl/light_poseidon/trait.PoseidonBytesHasher.js" async></script></section></div></main></body></html>

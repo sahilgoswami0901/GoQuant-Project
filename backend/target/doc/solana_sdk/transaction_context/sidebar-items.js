@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["BorrowedAccount","ExecutionRecord","InstructionAccount","InstructionContext","TransactionAccounts","TransactionContext","TransactionReturnData"],"type":["IndexOfAccount","TransactionAccount"]};

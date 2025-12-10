@@ -1,0 +1,1318 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-sdk-1.18.26/src/secp256k1_instruction.rs`."><title>secp256k1_instruction.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="solana_sdk" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">solana_sdk/</div>secp256k1_instruction.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Instructions for the [secp256k1 native program][np].
+<a href=#2 id=2 data-nosnippet>2</a>//!
+<a href=#3 id=3 data-nosnippet>3</a>//! [np]: https://docs.solanalabs.com/runtime/programs#secp256k1-program
+<a href=#4 id=4 data-nosnippet>4</a>//!
+<a href=#5 id=5 data-nosnippet>5</a>//! _This module provides low-level cryptographic building blocks that must be
+<a href=#6 id=6 data-nosnippet>6</a>//! used carefully to ensure proper security. Read this documentation and
+<a href=#7 id=7 data-nosnippet>7</a>//! accompanying links thoroughly._
+<a href=#8 id=8 data-nosnippet>8</a>//!
+<a href=#9 id=9 data-nosnippet>9</a>//! The secp26k1 native program peforms flexible verification of [secp256k1]
+<a href=#10 id=10 data-nosnippet>10</a>//! ECDSA signatures, as used by Ethereum. It can verify up to 255 signatures on
+<a href=#11 id=11 data-nosnippet>11</a>//! up to 255 messages, with those signatures, messages, and their public keys
+<a href=#12 id=12 data-nosnippet>12</a>//! arbitrarily distributed across the instruction data of any instructions in
+<a href=#13 id=13 data-nosnippet>13</a>//! the same transaction as the secp256k1 instruction.
+<a href=#14 id=14 data-nosnippet>14</a>//!
+<a href=#15 id=15 data-nosnippet>15</a>//! The secp256k1 native program ID is located in the [`secp256k1_program`] module.
+<a href=#16 id=16 data-nosnippet>16</a>//!
+<a href=#17 id=17 data-nosnippet>17</a>//! The instruction is designed for Ethereum interoperability, but may be useful
+<a href=#18 id=18 data-nosnippet>18</a>//! for other purposes. It operates on Ethereum addresses, which are [`keccak`]
+<a href=#19 id=19 data-nosnippet>19</a>//! hashes of secp256k1 public keys, and internally is implemented using the
+<a href=#20 id=20 data-nosnippet>20</a>//! secp256k1 key recovery algorithm. Ethereum address can be created for
+<a href=#21 id=21 data-nosnippet>21</a>//! secp256k1 public keys with the [`construct_eth_pubkey`] function.
+<a href=#22 id=22 data-nosnippet>22</a>//!
+<a href=#23 id=23 data-nosnippet>23</a>//! [`keccak`]: crate::keccak
+<a href=#24 id=24 data-nosnippet>24</a>//!
+<a href=#25 id=25 data-nosnippet>25</a>//! This instruction does not directly allow for key recovery as in Ethereum's
+<a href=#26 id=26 data-nosnippet>26</a>//! [`ecrecover`] precompile. For that Solana provides the [`secp256k1_recover`]
+<a href=#27 id=27 data-nosnippet>27</a>//! syscall.
+<a href=#28 id=28 data-nosnippet>28</a>//!
+<a href=#29 id=29 data-nosnippet>29</a>//! [secp256k1]: https://en.bitcoin.it/wiki/Secp256k1
+<a href=#30 id=30 data-nosnippet>30</a>//! [`secp256k1_program`]: solana_program::secp256k1_program
+<a href=#31 id=31 data-nosnippet>31</a>//! [`secp256k1_recover`]: solana_program::secp256k1_recover
+<a href=#32 id=32 data-nosnippet>32</a>//! [`ecrecover`]: https://docs.soliditylang.org/en/v0.8.14/units-and-global-variables.html?highlight=ecrecover#mathematical-and-cryptographic-functions
+<a href=#33 id=33 data-nosnippet>33</a>//!
+<a href=#34 id=34 data-nosnippet>34</a>//! Use cases for the secp256k1 instruction include:
+<a href=#35 id=35 data-nosnippet>35</a>//!
+<a href=#36 id=36 data-nosnippet>36</a>//! - Verifying Ethereum transaction signatures.
+<a href=#37 id=37 data-nosnippet>37</a>//! - Verifying Ethereum [EIP-712] signatures.
+<a href=#38 id=38 data-nosnippet>38</a>//! - Verifying arbitrary secp256k1 signatures.
+<a href=#39 id=39 data-nosnippet>39</a>//! - Signing a single message with multiple signatures.
+<a href=#40 id=40 data-nosnippet>40</a>//!
+<a href=#41 id=41 data-nosnippet>41</a>//! [EIP-712]: https://eips.ethereum.org/EIPS/eip-712
+<a href=#42 id=42 data-nosnippet>42</a>//!
+<a href=#43 id=43 data-nosnippet>43</a>//! The [`new_secp256k1_instruction`] function is suitable for building a
+<a href=#44 id=44 data-nosnippet>44</a>//! secp256k1 program instruction for basic use cases were a single message must
+<a href=#45 id=45 data-nosnippet>45</a>//! be signed by a known secret key. For other uses cases, including many
+<a href=#46 id=46 data-nosnippet>46</a>//! Ethereum-integration use cases, construction of the secp256k1 instruction
+<a href=#47 id=47 data-nosnippet>47</a>//! must be done manually.
+<a href=#48 id=48 data-nosnippet>48</a>//!
+<a href=#49 id=49 data-nosnippet>49</a>//! # How to use this program
+<a href=#50 id=50 data-nosnippet>50</a>//!
+<a href=#51 id=51 data-nosnippet>51</a>//! Transactions that uses the secp256k1 native program will typically include
+<a href=#52 id=52 data-nosnippet>52</a>//! at least two instructions: one for the secp256k1 program to verify the
+<a href=#53 id=53 data-nosnippet>53</a>//! signatures, and one for a custom program that will check that the secp256k1
+<a href=#54 id=54 data-nosnippet>54</a>//! instruction data matches what the program expects (using
+<a href=#55 id=55 data-nosnippet>55</a>//! [`load_instruction_at_checked`] or [`get_instruction_relative`]). The
+<a href=#56 id=56 data-nosnippet>56</a>//! signatures, messages, and Ethereum addresses being verified may reside in the
+<a href=#57 id=57 data-nosnippet>57</a>//! instruction data of either of these instructions, or in the instruction data
+<a href=#58 id=58 data-nosnippet>58</a>//! of one or more additional instructions, as long as those instructions are in
+<a href=#59 id=59 data-nosnippet>59</a>//! the same transaction.
+<a href=#60 id=60 data-nosnippet>60</a>//!
+<a href=#61 id=61 data-nosnippet>61</a>//! [`load_instruction_at_checked`]: crate::sysvar::instructions::load_instruction_at_checked
+<a href=#62 id=62 data-nosnippet>62</a>//! [`get_instruction_relative`]: crate::sysvar::instructions::get_instruction_relative
+<a href=#63 id=63 data-nosnippet>63</a>//!
+<a href=#64 id=64 data-nosnippet>64</a>//! Correct use of this program involves multiple steps, in client code and
+<a href=#65 id=65 data-nosnippet>65</a>//! program code:
+<a href=#66 id=66 data-nosnippet>66</a>//!
+<a href=#67 id=67 data-nosnippet>67</a>//! - In the client:
+<a href=#68 id=68 data-nosnippet>68</a>//!   - Sign the [`keccak`]-hashed messages with a secp256k1 ECDSA library,
+<a href=#69 id=69 data-nosnippet>69</a>//!     like the [`libsecp256k1`] crate.
+<a href=#70 id=70 data-nosnippet>70</a>//!   - Build any custom instruction data that contain signature, message, or
+<a href=#71 id=71 data-nosnippet>71</a>//!     Ethereum address data that will be used by the secp256k1 instruction.
+<a href=#72 id=72 data-nosnippet>72</a>//!   - Build the secp256k1 program instruction data, specifying the number of
+<a href=#73 id=73 data-nosnippet>73</a>//!     signatures to verify, the instruction indexes within the transaction,
+<a href=#74 id=74 data-nosnippet>74</a>//!     and offsets within those instruction's data, where the signatures,
+<a href=#75 id=75 data-nosnippet>75</a>//!     messages, and Ethereum addresses are located.
+<a href=#76 id=76 data-nosnippet>76</a>//!   - Build the custom instruction for the program that will check the results
+<a href=#77 id=77 data-nosnippet>77</a>//!     of the secp256k1 native program.
+<a href=#78 id=78 data-nosnippet>78</a>//!   - Package all instructions into a single transaction and submit them.
+<a href=#79 id=79 data-nosnippet>79</a>//! - In the program:
+<a href=#80 id=80 data-nosnippet>80</a>//!   - Load the secp256k1 instruction data with
+<a href=#81 id=81 data-nosnippet>81</a>//!     [`load_instruction_at_checked`]. or [`get_instruction_relative`].
+<a href=#82 id=82 data-nosnippet>82</a>//!   - Check that the secp256k1 program ID is equal to
+<a href=#83 id=83 data-nosnippet>83</a>//!     [`secp256k1_program::ID`], so that the signature verification cannot be
+<a href=#84 id=84 data-nosnippet>84</a>//!     faked with a malicious program.
+<a href=#85 id=85 data-nosnippet>85</a>//!   - Check that the public keys and messages are the expected values per
+<a href=#86 id=86 data-nosnippet>86</a>//!     the program's requirements.
+<a href=#87 id=87 data-nosnippet>87</a>//!
+<a href=#88 id=88 data-nosnippet>88</a>//! [`secp256k1_program::ID`]: crate::secp256k1_program::ID
+<a href=#89 id=89 data-nosnippet>89</a>//!
+<a href=#90 id=90 data-nosnippet>90</a>//! The signature, message, or Ethereum addresses may reside in the secp256k1
+<a href=#91 id=91 data-nosnippet>91</a>//! instruction data itself as additional data, their bytes following the bytes
+<a href=#92 id=92 data-nosnippet>92</a>//! of the protocol required by the secp256k1 instruction to locate the
+<a href=#93 id=93 data-nosnippet>93</a>//! signature, message, and Ethereum address data. This is the technique used by
+<a href=#94 id=94 data-nosnippet>94</a>//! `new_secp256k1_instruction` for simple signature verification.
+<a href=#95 id=95 data-nosnippet>95</a>//!
+<a href=#96 id=96 data-nosnippet>96</a>//! The `solana_sdk` crate provides few APIs for building the instructions and
+<a href=#97 id=97 data-nosnippet>97</a>//! transactions necessary for properly using the secp256k1 native program.
+<a href=#98 id=98 data-nosnippet>98</a>//! Many steps must be done manually.
+<a href=#99 id=99 data-nosnippet>99</a>//!
+<a href=#100 id=100 data-nosnippet>100</a>//! The `solana_program` crate provides no APIs to assist in interpreting
+<a href=#101 id=101 data-nosnippet>101</a>//! the the secp256k1 instruction data. It must be done manually.
+<a href=#102 id=102 data-nosnippet>102</a>//!
+<a href=#103 id=103 data-nosnippet>103</a>//! The secp256k1 program is implemented with the [`libsecp256k1`] crate,
+<a href=#104 id=104 data-nosnippet>104</a>//! which clients may also want to use.
+<a href=#105 id=105 data-nosnippet>105</a>//!
+<a href=#106 id=106 data-nosnippet>106</a>//! [`libsecp256k1`]: https://docs.rs/libsecp256k1/latest/libsecp256k1
+<a href=#107 id=107 data-nosnippet>107</a>//!
+<a href=#108 id=108 data-nosnippet>108</a>//! # Layout and interpretation of the secp256k1 instruction data
+<a href=#109 id=109 data-nosnippet>109</a>//!
+<a href=#110 id=110 data-nosnippet>110</a>//! The secp256k1 instruction data contains:
+<a href=#111 id=111 data-nosnippet>111</a>//!
+<a href=#112 id=112 data-nosnippet>112</a>//! - 1 byte indicating the number of signatures to verify, 0 - 255,
+<a href=#113 id=113 data-nosnippet>113</a>//! - A number of _signature offset_ structures that indicate where in the
+<a href=#114 id=114 data-nosnippet>114</a>//!   transaction to locate each signature, message, and Ethereum address.
+<a href=#115 id=115 data-nosnippet>115</a>//! - 0 or more bytes of arbitrary data, which may contain signatures,
+<a href=#116 id=116 data-nosnippet>116</a>//!   messages or Ethereum addresses.
+<a href=#117 id=117 data-nosnippet>117</a>//!
+<a href=#118 id=118 data-nosnippet>118</a>//! The signature offset structure is defined by [`SecpSignatureOffsets`],
+<a href=#119 id=119 data-nosnippet>119</a>//! and can be serialized to the correct format with [`bincode::serialize_into`].
+<a href=#120 id=120 data-nosnippet>120</a>//! Note that the bincode format may not be stable,
+<a href=#121 id=121 data-nosnippet>121</a>//! and callers should ensure they use the same version of `bincode` as the Solana SDK.
+<a href=#122 id=122 data-nosnippet>122</a>//! This data structure is not provided to Solana programs,
+<a href=#123 id=123 data-nosnippet>123</a>//! which are expected to interpret the signature offsets manually.
+<a href=#124 id=124 data-nosnippet>124</a>//!
+<a href=#125 id=125 data-nosnippet>125</a>//! [`bincode::serialize_into`]: https://docs.rs/bincode/1.3.3/bincode/fn.serialize_into.html
+<a href=#126 id=126 data-nosnippet>126</a>//!
+<a href=#127 id=127 data-nosnippet>127</a>//! The serialized signature offset structure has the following 11-byte layout,
+<a href=#128 id=128 data-nosnippet>128</a>//! with data types in little-endian encoding.
+<a href=#129 id=129 data-nosnippet>129</a>//!
+<a href=#130 id=130 data-nosnippet>130</a>//! | index  | bytes | type  | description |
+<a href=#131 id=131 data-nosnippet>131</a>//! |--------|-------|-------|-------------|
+<a href=#132 id=132 data-nosnippet>132</a>//! | 0      | 2     | `u16` | `signature_offset` - offset to 64-byte signature plus 1-byte recovery ID. |
+<a href=#133 id=133 data-nosnippet>133</a>//! | 2      | 1     | `u8`  | `signature_offset_instruction_index` - within the transaction, the index of the transaction whose instruction data contains the signature. |
+<a href=#134 id=134 data-nosnippet>134</a>//! | 3      | 2     | `u16` | `eth_address_offset` - offset to 20-byte Ethereum address. |
+<a href=#135 id=135 data-nosnippet>135</a>//! | 5      | 1     | `u8`  | `eth_address_instruction_index` - within the transaction, the index of the instruction whose instruction data contains the Ethereum address. |
+<a href=#136 id=136 data-nosnippet>136</a>//! | 6      | 2     | `u16` | `message_data_offset` - Offset to start of message data. |
+<a href=#137 id=137 data-nosnippet>137</a>//! | 8      | 2     | `u16` | `message_data_size` - Size of message data in bytes. |
+<a href=#138 id=138 data-nosnippet>138</a>//! | 10     | 1     | `u8`  | `message_instruction_index` - Within the transaction, the index of the instruction whose instruction data contains the message data. |
+<a href=#139 id=139 data-nosnippet>139</a>//!
+<a href=#140 id=140 data-nosnippet>140</a>//! # Signature malleability
+<a href=#141 id=141 data-nosnippet>141</a>//!
+<a href=#142 id=142 data-nosnippet>142</a>//! With the ECDSA signature algorithm it is possible for any party, given a
+<a href=#143 id=143 data-nosnippet>143</a>//! valid signature of some message, to create a second signature that is
+<a href=#144 id=144 data-nosnippet>144</a>//! equally valid. This is known as _signature malleability_. In many cases this
+<a href=#145 id=145 data-nosnippet>145</a>//! is not a concern, but in cases where applications rely on signatures to have
+<a href=#146 id=146 data-nosnippet>146</a>//! a unique representation this can be the source of bugs, potentially with
+<a href=#147 id=147 data-nosnippet>147</a>//! security implications.
+<a href=#148 id=148 data-nosnippet>148</a>//!
+<a href=#149 id=149 data-nosnippet>149</a>//! **The solana `secp256k1_recover` function does not prevent signature
+<a href=#150 id=150 data-nosnippet>150</a>//! malleability**. This is in contrast to the Bitcoin secp256k1 library, which
+<a href=#151 id=151 data-nosnippet>151</a>//! does prevent malleability by default. Solana accepts signatures with `S`
+<a href=#152 id=152 data-nosnippet>152</a>//! values that are either in the _high order_ or in the _low order_, and it
+<a href=#153 id=153 data-nosnippet>153</a>//! is trivial to produce one from the other.
+<a href=#154 id=154 data-nosnippet>154</a>//!
+<a href=#155 id=155 data-nosnippet>155</a>//! For more complete documentation of the subject, and techniques to prevent
+<a href=#156 id=156 data-nosnippet>156</a>//! malleability, see the documentation for the [`secp256k1_recover`] syscall.
+<a href=#157 id=157 data-nosnippet>157</a>//!
+<a href=#158 id=158 data-nosnippet>158</a>//! # Additional security considerations
+<a href=#159 id=159 data-nosnippet>159</a>//!
+<a href=#160 id=160 data-nosnippet>160</a>//! Most programs will want to be conservative about the layout of the secp256k1 instruction
+<a href=#161 id=161 data-nosnippet>161</a>//! to prevent unforeseen bugs. The following checks may be desirable:
+<a href=#162 id=162 data-nosnippet>162</a>//!
+<a href=#163 id=163 data-nosnippet>163</a>//! - That there are exactly the expected number of signatures.
+<a href=#164 id=164 data-nosnippet>164</a>//! - That the three indexes, `signature_offset_instruction_index`,
+<a href=#165 id=165 data-nosnippet>165</a>//!   `eth_address_instruction_index`, and `message_instruction_index` are as
+<a href=#166 id=166 data-nosnippet>166</a>//!   expected, placing the signature, message and Ethereum address in the
+<a href=#167 id=167 data-nosnippet>167</a>//!   expected instruction.
+<a href=#168 id=168 data-nosnippet>168</a>//!
+<a href=#169 id=169 data-nosnippet>169</a>//! Loading the secp256k1 instruction data within a program requires access to
+<a href=#170 id=170 data-nosnippet>170</a>//! the [instructions sysvar][is], which must be passed to the program by its
+<a href=#171 id=171 data-nosnippet>171</a>//! caller. Programs must verify the ID of this program to avoid calling an
+<a href=#172 id=172 data-nosnippet>172</a>//! imposter program. This does not need to be done manually though, as long as
+<a href=#173 id=173 data-nosnippet>173</a>//! it is only used through the [`load_instruction_at_checked`] or
+<a href=#174 id=174 data-nosnippet>174</a>//! [`get_instruction_relative`] functions. Both of these functions check their
+<a href=#175 id=175 data-nosnippet>175</a>//! sysvar argument to ensure it is the known instruction sysvar.
+<a href=#176 id=176 data-nosnippet>176</a>//!
+<a href=#177 id=177 data-nosnippet>177</a>//! [is]: crate::sysvar::instructions
+<a href=#178 id=178 data-nosnippet>178</a>//!
+<a href=#179 id=179 data-nosnippet>179</a>//! Programs should _always_ verify that the secp256k1 program ID loaded through
+<a href=#180 id=180 data-nosnippet>180</a>//! the instructions sysvar has the same value as in the [`secp256k1_program`]
+<a href=#181 id=181 data-nosnippet>181</a>//! module. Again this prevents imposter programs.
+<a href=#182 id=182 data-nosnippet>182</a>//!
+<a href=#183 id=183 data-nosnippet>183</a>//! [`secp256k1_program`]: crate::secp256k1_program
+<a href=#184 id=184 data-nosnippet>184</a>//!
+<a href=#185 id=185 data-nosnippet>185</a>//! # Errors
+<a href=#186 id=186 data-nosnippet>186</a>//!
+<a href=#187 id=187 data-nosnippet>187</a>//! The transaction will fail if any of the following are true:
+<a href=#188 id=188 data-nosnippet>188</a>//!
+<a href=#189 id=189 data-nosnippet>189</a>//! - Any signature was not created by the secret key corresponding to the
+<a href=#190 id=190 data-nosnippet>190</a>//!   specified public key.
+<a href=#191 id=191 data-nosnippet>191</a>//! - Any signature is invalid.
+<a href=#192 id=192 data-nosnippet>192</a>//! - Any signature is "overflowing", a non-standard condition.
+<a href=#193 id=193 data-nosnippet>193</a>//! - The instruction data is empty.
+<a href=#194 id=194 data-nosnippet>194</a>//! - The first byte of instruction data is equal to 0 (indicating no signatures),
+<a href=#195 id=195 data-nosnippet>195</a>//!   but the instruction data's length is greater than 1.
+<a href=#196 id=196 data-nosnippet>196</a>//! - The instruction data is not long enough to hold the number of signature
+<a href=#197 id=197 data-nosnippet>197</a>//!   offsets specified in the first byte.
+<a href=#198 id=198 data-nosnippet>198</a>//! - Any instruction indexes specified in the signature offsets are greater or
+<a href=#199 id=199 data-nosnippet>199</a>//!   equal to the number of instructions in the transaction.
+<a href=#200 id=200 data-nosnippet>200</a>//! - Any bounds specified in the signature offsets exceed the bounds of the
+<a href=#201 id=201 data-nosnippet>201</a>//!   instruction data to which they are indexed.
+<a href=#202 id=202 data-nosnippet>202</a>//!
+<a href=#203 id=203 data-nosnippet>203</a>//! # Examples
+<a href=#204 id=204 data-nosnippet>204</a>//!
+<a href=#205 id=205 data-nosnippet>205</a>//! Both of the following examples make use of the following module definition
+<a href=#206 id=206 data-nosnippet>206</a>//! to parse the secp256k1 instruction data from within a Solana program.
+<a href=#207 id=207 data-nosnippet>207</a>//!
+<a href=#208 id=208 data-nosnippet>208</a>//! ```no_run
+<a href=#209 id=209 data-nosnippet>209</a>//! mod secp256k1_defs {
+<a href=#210 id=210 data-nosnippet>210</a>//!     use solana_program::program_error::ProgramError;
+<a href=#211 id=211 data-nosnippet>211</a>//!     use std::iter::Iterator;
+<a href=#212 id=212 data-nosnippet>212</a>//!
+<a href=#213 id=213 data-nosnippet>213</a>//!     pub const HASHED_PUBKEY_SERIALIZED_SIZE: usize = 20;
+<a href=#214 id=214 data-nosnippet>214</a>//!     pub const SIGNATURE_SERIALIZED_SIZE: usize = 64;
+<a href=#215 id=215 data-nosnippet>215</a>//!     pub const SIGNATURE_OFFSETS_SERIALIZED_SIZE: usize = 11;
+<a href=#216 id=216 data-nosnippet>216</a>//!
+<a href=#217 id=217 data-nosnippet>217</a>//!     /// The structure encoded in the secp2256k1 instruction data.
+<a href=#218 id=218 data-nosnippet>218</a>//!     pub struct SecpSignatureOffsets {
+<a href=#219 id=219 data-nosnippet>219</a>//!         pub signature_offset: u16,
+<a href=#220 id=220 data-nosnippet>220</a>//!         pub signature_instruction_index: u8,
+<a href=#221 id=221 data-nosnippet>221</a>//!         pub eth_address_offset: u16,
+<a href=#222 id=222 data-nosnippet>222</a>//!         pub eth_address_instruction_index: u8,
+<a href=#223 id=223 data-nosnippet>223</a>//!         pub message_data_offset: u16,
+<a href=#224 id=224 data-nosnippet>224</a>//!         pub message_data_size: u16,
+<a href=#225 id=225 data-nosnippet>225</a>//!         pub message_instruction_index: u8,
+<a href=#226 id=226 data-nosnippet>226</a>//!     }
+<a href=#227 id=227 data-nosnippet>227</a>//!
+<a href=#228 id=228 data-nosnippet>228</a>//!     pub fn iter_signature_offsets(
+<a href=#229 id=229 data-nosnippet>229</a>//!        secp256k1_instr_data: &amp;[u8],
+<a href=#230 id=230 data-nosnippet>230</a>//!     ) -&gt; Result&lt;impl Iterator&lt;Item = SecpSignatureOffsets&gt; + '_, ProgramError&gt; {
+<a href=#231 id=231 data-nosnippet>231</a>//!         // First element is the number of `SecpSignatureOffsets`.
+<a href=#232 id=232 data-nosnippet>232</a>//!         let num_structs = *secp256k1_instr_data
+<a href=#233 id=233 data-nosnippet>233</a>//!             .get(0)
+<a href=#234 id=234 data-nosnippet>234</a>//!             .ok_or(ProgramError::InvalidArgument)?;
+<a href=#235 id=235 data-nosnippet>235</a>//!
+<a href=#236 id=236 data-nosnippet>236</a>//!         let all_structs_size = SIGNATURE_OFFSETS_SERIALIZED_SIZE * num_structs as usize;
+<a href=#237 id=237 data-nosnippet>237</a>//!         let all_structs_slice = secp256k1_instr_data
+<a href=#238 id=238 data-nosnippet>238</a>//!             .get(1..all_structs_size + 1)
+<a href=#239 id=239 data-nosnippet>239</a>//!             .ok_or(ProgramError::InvalidArgument)?;
+<a href=#240 id=240 data-nosnippet>240</a>//!
+<a href=#241 id=241 data-nosnippet>241</a>//!         fn decode_u16(chunk: &amp;[u8], index: usize) -&gt; u16 {
+<a href=#242 id=242 data-nosnippet>242</a>//!             u16::from_le_bytes(&lt;[u8; 2]&gt;::try_from(&amp;chunk[index..index + 2]).unwrap())
+<a href=#243 id=243 data-nosnippet>243</a>//!         }
+<a href=#244 id=244 data-nosnippet>244</a>//!
+<a href=#245 id=245 data-nosnippet>245</a>//!         Ok(all_structs_slice
+<a href=#246 id=246 data-nosnippet>246</a>//!             .chunks(SIGNATURE_OFFSETS_SERIALIZED_SIZE)
+<a href=#247 id=247 data-nosnippet>247</a>//!             .map(|chunk| SecpSignatureOffsets {
+<a href=#248 id=248 data-nosnippet>248</a>//!                 signature_offset: decode_u16(chunk, 0),
+<a href=#249 id=249 data-nosnippet>249</a>//!                 signature_instruction_index: chunk[2],
+<a href=#250 id=250 data-nosnippet>250</a>//!                 eth_address_offset: decode_u16(chunk, 3),
+<a href=#251 id=251 data-nosnippet>251</a>//!                 eth_address_instruction_index: chunk[5],
+<a href=#252 id=252 data-nosnippet>252</a>//!                 message_data_offset: decode_u16(chunk, 6),
+<a href=#253 id=253 data-nosnippet>253</a>//!                 message_data_size: decode_u16(chunk, 8),
+<a href=#254 id=254 data-nosnippet>254</a>//!                 message_instruction_index: chunk[10],
+<a href=#255 id=255 data-nosnippet>255</a>//!             }))
+<a href=#256 id=256 data-nosnippet>256</a>//!     }
+<a href=#257 id=257 data-nosnippet>257</a>//! }
+<a href=#258 id=258 data-nosnippet>258</a>//! ```
+<a href=#259 id=259 data-nosnippet>259</a>//!
+<a href=#260 id=260 data-nosnippet>260</a>//! ## Example: Signing and verifying with `new_secp256k1_instruction`
+<a href=#261 id=261 data-nosnippet>261</a>//!
+<a href=#262 id=262 data-nosnippet>262</a>//! This example demonstrates the simplest way to use the secp256k1 program, by
+<a href=#263 id=263 data-nosnippet>263</a>//! calling [`new_secp256k1_instruction`] to sign a single message and build the
+<a href=#264 id=264 data-nosnippet>264</a>//! corresponding secp256k1 instruction.
+<a href=#265 id=265 data-nosnippet>265</a>//!
+<a href=#266 id=266 data-nosnippet>266</a>//! This example has two components: a Solana program, and an RPC client that
+<a href=#267 id=267 data-nosnippet>267</a>//! sends a transaction to call it. The RPC client will sign a single message,
+<a href=#268 id=268 data-nosnippet>268</a>//! and the Solana program will introspect the secp256k1 instruction to verify
+<a href=#269 id=269 data-nosnippet>269</a>//! that the signer matches a known authorized public key.
+<a href=#270 id=270 data-nosnippet>270</a>//!
+<a href=#271 id=271 data-nosnippet>271</a>//! The Solana program. Note that it uses `libsecp256k1` version 0.7.0 to parse
+<a href=#272 id=272 data-nosnippet>272</a>//! the secp256k1 signature to prevent malleability.
+<a href=#273 id=273 data-nosnippet>273</a>//!
+<a href=#274 id=274 data-nosnippet>274</a>//! ```no_run
+<a href=#275 id=275 data-nosnippet>275</a>//! # mod secp256k1_defs {
+<a href=#276 id=276 data-nosnippet>276</a>//! #     use solana_program::program_error::ProgramError;
+<a href=#277 id=277 data-nosnippet>277</a>//! #     use std::iter::Iterator;
+<a href=#278 id=278 data-nosnippet>278</a>//! #
+<a href=#279 id=279 data-nosnippet>279</a>//! #     pub const HASHED_PUBKEY_SERIALIZED_SIZE: usize = 20;
+<a href=#280 id=280 data-nosnippet>280</a>//! #     pub const SIGNATURE_SERIALIZED_SIZE: usize = 64;
+<a href=#281 id=281 data-nosnippet>281</a>//! #     pub const SIGNATURE_OFFSETS_SERIALIZED_SIZE: usize = 11;
+<a href=#282 id=282 data-nosnippet>282</a>//! #
+<a href=#283 id=283 data-nosnippet>283</a>//! #     /// The structure encoded in the secp2256k1 instruction data.
+<a href=#284 id=284 data-nosnippet>284</a>//! #     pub struct SecpSignatureOffsets {
+<a href=#285 id=285 data-nosnippet>285</a>//! #         pub signature_offset: u16,
+<a href=#286 id=286 data-nosnippet>286</a>//! #         pub signature_instruction_index: u8,
+<a href=#287 id=287 data-nosnippet>287</a>//! #         pub eth_address_offset: u16,
+<a href=#288 id=288 data-nosnippet>288</a>//! #         pub eth_address_instruction_index: u8,
+<a href=#289 id=289 data-nosnippet>289</a>//! #         pub message_data_offset: u16,
+<a href=#290 id=290 data-nosnippet>290</a>//! #         pub message_data_size: u16,
+<a href=#291 id=291 data-nosnippet>291</a>//! #         pub message_instruction_index: u8,
+<a href=#292 id=292 data-nosnippet>292</a>//! #     }
+<a href=#293 id=293 data-nosnippet>293</a>//! #
+<a href=#294 id=294 data-nosnippet>294</a>//! #     pub fn iter_signature_offsets(
+<a href=#295 id=295 data-nosnippet>295</a>//! #        secp256k1_instr_data: &amp;[u8],
+<a href=#296 id=296 data-nosnippet>296</a>//! #     ) -&gt; Result&lt;impl Iterator&lt;Item = SecpSignatureOffsets&gt; + '_, ProgramError&gt; {
+<a href=#297 id=297 data-nosnippet>297</a>//! #         // First element is the number of `SecpSignatureOffsets`.
+<a href=#298 id=298 data-nosnippet>298</a>//! #         let num_structs = *secp256k1_instr_data
+<a href=#299 id=299 data-nosnippet>299</a>//! #             .get(0)
+<a href=#300 id=300 data-nosnippet>300</a>//! #             .ok_or(ProgramError::InvalidArgument)?;
+<a href=#301 id=301 data-nosnippet>301</a>//! #
+<a href=#302 id=302 data-nosnippet>302</a>//! #         let all_structs_size = SIGNATURE_OFFSETS_SERIALIZED_SIZE * num_structs as usize;
+<a href=#303 id=303 data-nosnippet>303</a>//! #         let all_structs_slice = secp256k1_instr_data
+<a href=#304 id=304 data-nosnippet>304</a>//! #             .get(1..all_structs_size + 1)
+<a href=#305 id=305 data-nosnippet>305</a>//! #             .ok_or(ProgramError::InvalidArgument)?;
+<a href=#306 id=306 data-nosnippet>306</a>//! #
+<a href=#307 id=307 data-nosnippet>307</a>//! #         fn decode_u16(chunk: &amp;[u8], index: usize) -&gt; u16 {
+<a href=#308 id=308 data-nosnippet>308</a>//! #             u16::from_le_bytes(&lt;[u8; 2]&gt;::try_from(&amp;chunk[index..index + 2]).unwrap())
+<a href=#309 id=309 data-nosnippet>309</a>//! #         }
+<a href=#310 id=310 data-nosnippet>310</a>//! #
+<a href=#311 id=311 data-nosnippet>311</a>//! #         Ok(all_structs_slice
+<a href=#312 id=312 data-nosnippet>312</a>//! #             .chunks(SIGNATURE_OFFSETS_SERIALIZED_SIZE)
+<a href=#313 id=313 data-nosnippet>313</a>//! #             .map(|chunk| SecpSignatureOffsets {
+<a href=#314 id=314 data-nosnippet>314</a>//! #                 signature_offset: decode_u16(chunk, 0),
+<a href=#315 id=315 data-nosnippet>315</a>//! #                 signature_instruction_index: chunk[2],
+<a href=#316 id=316 data-nosnippet>316</a>//! #                 eth_address_offset: decode_u16(chunk, 3),
+<a href=#317 id=317 data-nosnippet>317</a>//! #                 eth_address_instruction_index: chunk[5],
+<a href=#318 id=318 data-nosnippet>318</a>//! #                 message_data_offset: decode_u16(chunk, 6),
+<a href=#319 id=319 data-nosnippet>319</a>//! #                 message_data_size: decode_u16(chunk, 8),
+<a href=#320 id=320 data-nosnippet>320</a>//! #                 message_instruction_index: chunk[10],
+<a href=#321 id=321 data-nosnippet>321</a>//! #             }))
+<a href=#322 id=322 data-nosnippet>322</a>//! #     }
+<a href=#323 id=323 data-nosnippet>323</a>//! # }
+<a href=#324 id=324 data-nosnippet>324</a>//! use solana_program::{
+<a href=#325 id=325 data-nosnippet>325</a>//!     account_info::{next_account_info, AccountInfo},
+<a href=#326 id=326 data-nosnippet>326</a>//!     entrypoint::ProgramResult,
+<a href=#327 id=327 data-nosnippet>327</a>//!     msg,
+<a href=#328 id=328 data-nosnippet>328</a>//!     program_error::ProgramError,
+<a href=#329 id=329 data-nosnippet>329</a>//!     secp256k1_program,
+<a href=#330 id=330 data-nosnippet>330</a>//!     sysvar,
+<a href=#331 id=331 data-nosnippet>331</a>//! };
+<a href=#332 id=332 data-nosnippet>332</a>//!
+<a href=#333 id=333 data-nosnippet>333</a>//! /// An Ethereum address corresponding to a secp256k1 secret key that is
+<a href=#334 id=334 data-nosnippet>334</a>//! /// authorized to sign our messages.
+<a href=#335 id=335 data-nosnippet>335</a>//! const AUTHORIZED_ETH_ADDRESS: [u8; 20] = [
+<a href=#336 id=336 data-nosnippet>336</a>//!     0x18, 0x8a, 0x5c, 0xf2, 0x3b, 0x0e, 0xff, 0xe9, 0xa8, 0xe1, 0x42, 0x64, 0x5b, 0x82, 0x2f, 0x3a,
+<a href=#337 id=337 data-nosnippet>337</a>//!     0x6b, 0x8b, 0x52, 0x35,
+<a href=#338 id=338 data-nosnippet>338</a>//! ];
+<a href=#339 id=339 data-nosnippet>339</a>//!
+<a href=#340 id=340 data-nosnippet>340</a>//! /// Check the secp256k1 instruction to ensure it was signed by
+<a href=#341 id=341 data-nosnippet>341</a>//! /// `AUTHORIZED_ETH_ADDRESS`s key.
+<a href=#342 id=342 data-nosnippet>342</a>//! ///
+<a href=#343 id=343 data-nosnippet>343</a>//! /// `accounts` is the slice of all accounts passed to the program
+<a href=#344 id=344 data-nosnippet>344</a>//! /// entrypoint. The only account it should contain is the instructions sysvar.
+<a href=#345 id=345 data-nosnippet>345</a>//! fn demo_secp256k1_verify_basic(
+<a href=#346 id=346 data-nosnippet>346</a>//!    accounts: &amp;[AccountInfo],
+<a href=#347 id=347 data-nosnippet>347</a>//! ) -&gt; ProgramResult {
+<a href=#348 id=348 data-nosnippet>348</a>//!     let account_info_iter = &amp;mut accounts.iter();
+<a href=#349 id=349 data-nosnippet>349</a>//!
+<a href=#350 id=350 data-nosnippet>350</a>//!     // The instructions sysvar gives access to the instructions in the transaction.
+<a href=#351 id=351 data-nosnippet>351</a>//!     let instructions_sysvar_account = next_account_info(account_info_iter)?;
+<a href=#352 id=352 data-nosnippet>352</a>//!     assert!(sysvar::instructions::check_id(
+<a href=#353 id=353 data-nosnippet>353</a>//!         instructions_sysvar_account.key
+<a href=#354 id=354 data-nosnippet>354</a>//!     ));
+<a href=#355 id=355 data-nosnippet>355</a>//!
+<a href=#356 id=356 data-nosnippet>356</a>//!     // Load the secp256k1 instruction.
+<a href=#357 id=357 data-nosnippet>357</a>//!     // `new_secp256k1_instruction` generates an instruction that must be at index 0.
+<a href=#358 id=358 data-nosnippet>358</a>//!     let secp256k1_instr =
+<a href=#359 id=359 data-nosnippet>359</a>//!         sysvar::instructions::load_instruction_at_checked(0, instructions_sysvar_account)?;
+<a href=#360 id=360 data-nosnippet>360</a>//!
+<a href=#361 id=361 data-nosnippet>361</a>//!     // Verify it is a secp256k1 instruction.
+<a href=#362 id=362 data-nosnippet>362</a>//!     // This is security-critical - what if the transaction uses an imposter secp256k1 program?
+<a href=#363 id=363 data-nosnippet>363</a>//!     assert!(secp256k1_program::check_id(&amp;secp256k1_instr.program_id));
+<a href=#364 id=364 data-nosnippet>364</a>//!
+<a href=#365 id=365 data-nosnippet>365</a>//!     // There must be at least one byte. This is also verified by the runtime,
+<a href=#366 id=366 data-nosnippet>366</a>//!     // and doesn't strictly need to be checked.
+<a href=#367 id=367 data-nosnippet>367</a>//!     assert!(secp256k1_instr.data.len() &gt; 1);
+<a href=#368 id=368 data-nosnippet>368</a>//!
+<a href=#369 id=369 data-nosnippet>369</a>//!     let num_signatures = secp256k1_instr.data[0];
+<a href=#370 id=370 data-nosnippet>370</a>//!     // `new_secp256k1_instruction` generates an instruction that contains one signature.
+<a href=#371 id=371 data-nosnippet>371</a>//!     assert_eq!(1, num_signatures);
+<a href=#372 id=372 data-nosnippet>372</a>//!
+<a href=#373 id=373 data-nosnippet>373</a>//!     // Load the first and only set of signature offsets.
+<a href=#374 id=374 data-nosnippet>374</a>//!     let offsets: secp256k1_defs::SecpSignatureOffsets =
+<a href=#375 id=375 data-nosnippet>375</a>//!         secp256k1_defs::iter_signature_offsets(&amp;secp256k1_instr.data)?
+<a href=#376 id=376 data-nosnippet>376</a>//!             .next()
+<a href=#377 id=377 data-nosnippet>377</a>//!             .ok_or(ProgramError::InvalidArgument)?;
+<a href=#378 id=378 data-nosnippet>378</a>//!
+<a href=#379 id=379 data-nosnippet>379</a>//!     // `new_secp256k1_instruction` generates an instruction that only uses instruction index 0.
+<a href=#380 id=380 data-nosnippet>380</a>//!     assert_eq!(0, offsets.signature_instruction_index);
+<a href=#381 id=381 data-nosnippet>381</a>//!     assert_eq!(0, offsets.eth_address_instruction_index);
+<a href=#382 id=382 data-nosnippet>382</a>//!     assert_eq!(0, offsets.message_instruction_index);
+<a href=#383 id=383 data-nosnippet>383</a>//!
+<a href=#384 id=384 data-nosnippet>384</a>//!     // Reject high-s value signatures to prevent malleability.
+<a href=#385 id=385 data-nosnippet>385</a>//!     // Solana does not do this itself.
+<a href=#386 id=386 data-nosnippet>386</a>//!     // This may or may not be necessary depending on use case.
+<a href=#387 id=387 data-nosnippet>387</a>//!     {
+<a href=#388 id=388 data-nosnippet>388</a>//!         let signature = &amp;secp256k1_instr.data[offsets.signature_offset as usize
+<a href=#389 id=389 data-nosnippet>389</a>//!             ..offsets.signature_offset as usize + secp256k1_defs::SIGNATURE_SERIALIZED_SIZE];
+<a href=#390 id=390 data-nosnippet>390</a>//!         let signature = libsecp256k1::Signature::parse_standard_slice(signature)
+<a href=#391 id=391 data-nosnippet>391</a>//!             .map_err(|_| ProgramError::InvalidArgument)?;
+<a href=#392 id=392 data-nosnippet>392</a>//!
+<a href=#393 id=393 data-nosnippet>393</a>//!         if signature.s.is_high() {
+<a href=#394 id=394 data-nosnippet>394</a>//!             msg!("signature with high-s value");
+<a href=#395 id=395 data-nosnippet>395</a>//!             return Err(ProgramError::InvalidArgument);
+<a href=#396 id=396 data-nosnippet>396</a>//!         }
+<a href=#397 id=397 data-nosnippet>397</a>//!     }
+<a href=#398 id=398 data-nosnippet>398</a>//!
+<a href=#399 id=399 data-nosnippet>399</a>//!     // There is likely at least one more verification step a real program needs
+<a href=#400 id=400 data-nosnippet>400</a>//!     // to do here to ensure it trusts the secp256k1 instruction, e.g.:
+<a href=#401 id=401 data-nosnippet>401</a>//!     //
+<a href=#402 id=402 data-nosnippet>402</a>//!     // - verify the tx signer is authorized
+<a href=#403 id=403 data-nosnippet>403</a>//!     // - verify the secp256k1 signer is authorized
+<a href=#404 id=404 data-nosnippet>404</a>//!
+<a href=#405 id=405 data-nosnippet>405</a>//!     // Here we are checking the secp256k1 pubkey against a known authorized pubkey.
+<a href=#406 id=406 data-nosnippet>406</a>//!     let eth_address = &amp;secp256k1_instr.data[offsets.eth_address_offset as usize
+<a href=#407 id=407 data-nosnippet>407</a>//!         ..offsets.eth_address_offset as usize + secp256k1_defs::HASHED_PUBKEY_SERIALIZED_SIZE];
+<a href=#408 id=408 data-nosnippet>408</a>//!
+<a href=#409 id=409 data-nosnippet>409</a>//!     if eth_address != AUTHORIZED_ETH_ADDRESS {
+<a href=#410 id=410 data-nosnippet>410</a>//!         return Err(ProgramError::InvalidArgument);
+<a href=#411 id=411 data-nosnippet>411</a>//!     }
+<a href=#412 id=412 data-nosnippet>412</a>//!
+<a href=#413 id=413 data-nosnippet>413</a>//!     Ok(())
+<a href=#414 id=414 data-nosnippet>414</a>//! }
+<a href=#415 id=415 data-nosnippet>415</a>//! ```
+<a href=#416 id=416 data-nosnippet>416</a>//!
+<a href=#417 id=417 data-nosnippet>417</a>//! The client program:
+<a href=#418 id=418 data-nosnippet>418</a>//!
+<a href=#419 id=419 data-nosnippet>419</a>//! ```no_run
+<a href=#420 id=420 data-nosnippet>420</a>//! # use solana_sdk::example_mocks::solana_rpc_client;
+<a href=#421 id=421 data-nosnippet>421</a>//! use anyhow::Result;
+<a href=#422 id=422 data-nosnippet>422</a>//! use solana_rpc_client::rpc_client::RpcClient;
+<a href=#423 id=423 data-nosnippet>423</a>//! use solana_sdk::{
+<a href=#424 id=424 data-nosnippet>424</a>//!     instruction::{AccountMeta, Instruction},
+<a href=#425 id=425 data-nosnippet>425</a>//!     secp256k1_instruction,
+<a href=#426 id=426 data-nosnippet>426</a>//!     signature::{Keypair, Signer},
+<a href=#427 id=427 data-nosnippet>427</a>//!     sysvar,
+<a href=#428 id=428 data-nosnippet>428</a>//!     transaction::Transaction,
+<a href=#429 id=429 data-nosnippet>429</a>//! };
+<a href=#430 id=430 data-nosnippet>430</a>//!
+<a href=#431 id=431 data-nosnippet>431</a>//! fn demo_secp256k1_verify_basic(
+<a href=#432 id=432 data-nosnippet>432</a>//!     payer_keypair: &amp;Keypair,
+<a href=#433 id=433 data-nosnippet>433</a>//!     secp256k1_secret_key: &amp;libsecp256k1::SecretKey,
+<a href=#434 id=434 data-nosnippet>434</a>//!     client: &amp;RpcClient,
+<a href=#435 id=435 data-nosnippet>435</a>//!     program_keypair: &amp;Keypair,
+<a href=#436 id=436 data-nosnippet>436</a>//! ) -&gt; Result&lt;()&gt; {
+<a href=#437 id=437 data-nosnippet>437</a>//!     // Internally to `new_secp256k1_instruction` and
+<a href=#438 id=438 data-nosnippet>438</a>//!     // `secp256k_instruction::verify` (the secp256k1 program), this message is
+<a href=#439 id=439 data-nosnippet>439</a>//!     // keccak-hashed before signing.
+<a href=#440 id=440 data-nosnippet>440</a>//!     let msg = b"hello world";
+<a href=#441 id=441 data-nosnippet>441</a>//!     let secp256k1_instr = secp256k1_instruction::new_secp256k1_instruction(&amp;secp256k1_secret_key, msg);
+<a href=#442 id=442 data-nosnippet>442</a>//!
+<a href=#443 id=443 data-nosnippet>443</a>//!     let program_instr = Instruction::new_with_bytes(
+<a href=#444 id=444 data-nosnippet>444</a>//!         program_keypair.pubkey(),
+<a href=#445 id=445 data-nosnippet>445</a>//!         &amp;[],
+<a href=#446 id=446 data-nosnippet>446</a>//!         vec![
+<a href=#447 id=447 data-nosnippet>447</a>//!             AccountMeta::new_readonly(sysvar::instructions::ID, false)
+<a href=#448 id=448 data-nosnippet>448</a>//!         ],
+<a href=#449 id=449 data-nosnippet>449</a>//!     );
+<a href=#450 id=450 data-nosnippet>450</a>//!
+<a href=#451 id=451 data-nosnippet>451</a>//!     let blockhash = client.get_latest_blockhash()?;
+<a href=#452 id=452 data-nosnippet>452</a>//!     let tx = Transaction::new_signed_with_payer(
+<a href=#453 id=453 data-nosnippet>453</a>//!         &amp;[secp256k1_instr, program_instr],
+<a href=#454 id=454 data-nosnippet>454</a>//!         Some(&amp;payer_keypair.pubkey()),
+<a href=#455 id=455 data-nosnippet>455</a>//!         &amp;[payer_keypair],
+<a href=#456 id=456 data-nosnippet>456</a>//!         blockhash,
+<a href=#457 id=457 data-nosnippet>457</a>//!     );
+<a href=#458 id=458 data-nosnippet>458</a>//!
+<a href=#459 id=459 data-nosnippet>459</a>//!     client.send_and_confirm_transaction(&amp;tx)?;
+<a href=#460 id=460 data-nosnippet>460</a>//!
+<a href=#461 id=461 data-nosnippet>461</a>//!     Ok(())
+<a href=#462 id=462 data-nosnippet>462</a>//! }
+<a href=#463 id=463 data-nosnippet>463</a>//! ```
+<a href=#464 id=464 data-nosnippet>464</a>//!
+<a href=#465 id=465 data-nosnippet>465</a>//! ## Example: Verifying multiple signatures in one instruction
+<a href=#466 id=466 data-nosnippet>466</a>//!
+<a href=#467 id=467 data-nosnippet>467</a>//! This examples demonstrates manually creating a secp256k1 instruction
+<a href=#468 id=468 data-nosnippet>468</a>//! containing many signatures, and a Solana program that parses them all. This
+<a href=#469 id=469 data-nosnippet>469</a>//! example on its own has no practical purpose. It simply demonstrates advanced
+<a href=#470 id=470 data-nosnippet>470</a>//! use of the secp256k1 program.
+<a href=#471 id=471 data-nosnippet>471</a>//!
+<a href=#472 id=472 data-nosnippet>472</a>//! Recall that the secp256k1 program will accept signatures, messages, and
+<a href=#473 id=473 data-nosnippet>473</a>//! Ethereum addresses that reside in any instruction contained in the same
+<a href=#474 id=474 data-nosnippet>474</a>//! transaction. In the _previous_ example, the Solana program asserted that all
+<a href=#475 id=475 data-nosnippet>475</a>//! signatures, messages, and addresses were stored in the instruction at 0. In
+<a href=#476 id=476 data-nosnippet>476</a>//! this next example the Solana program supports signatures, messages, and
+<a href=#477 id=477 data-nosnippet>477</a>//! addresses stored in any instruction. For simplicity the client still only
+<a href=#478 id=478 data-nosnippet>478</a>//! stores signatures, messages, and addresses in a single instruction, the
+<a href=#479 id=479 data-nosnippet>479</a>//! secp256k1 instruction. The code for storing this data across multiple
+<a href=#480 id=480 data-nosnippet>480</a>//! instructions would be complex, and may not be necessary in practice.
+<a href=#481 id=481 data-nosnippet>481</a>//!
+<a href=#482 id=482 data-nosnippet>482</a>//! This example has two components: a Solana program, and an RPC client that
+<a href=#483 id=483 data-nosnippet>483</a>//! sends a transaction to call it.
+<a href=#484 id=484 data-nosnippet>484</a>//!
+<a href=#485 id=485 data-nosnippet>485</a>//! The Solana program:
+<a href=#486 id=486 data-nosnippet>486</a>//!
+<a href=#487 id=487 data-nosnippet>487</a>//! ```no_run
+<a href=#488 id=488 data-nosnippet>488</a>//! # mod secp256k1_defs {
+<a href=#489 id=489 data-nosnippet>489</a>//! #     use solana_program::program_error::ProgramError;
+<a href=#490 id=490 data-nosnippet>490</a>//! #     use std::iter::Iterator;
+<a href=#491 id=491 data-nosnippet>491</a>//! #
+<a href=#492 id=492 data-nosnippet>492</a>//! #     pub const HASHED_PUBKEY_SERIALIZED_SIZE: usize = 20;
+<a href=#493 id=493 data-nosnippet>493</a>//! #     pub const SIGNATURE_SERIALIZED_SIZE: usize = 64;
+<a href=#494 id=494 data-nosnippet>494</a>//! #     pub const SIGNATURE_OFFSETS_SERIALIZED_SIZE: usize = 11;
+<a href=#495 id=495 data-nosnippet>495</a>//! #
+<a href=#496 id=496 data-nosnippet>496</a>//! #     /// The structure encoded in the secp2256k1 instruction data.
+<a href=#497 id=497 data-nosnippet>497</a>//! #     pub struct SecpSignatureOffsets {
+<a href=#498 id=498 data-nosnippet>498</a>//! #         pub signature_offset: u16,
+<a href=#499 id=499 data-nosnippet>499</a>//! #         pub signature_instruction_index: u8,
+<a href=#500 id=500 data-nosnippet>500</a>//! #         pub eth_address_offset: u16,
+<a href=#501 id=501 data-nosnippet>501</a>//! #         pub eth_address_instruction_index: u8,
+<a href=#502 id=502 data-nosnippet>502</a>//! #         pub message_data_offset: u16,
+<a href=#503 id=503 data-nosnippet>503</a>//! #         pub message_data_size: u16,
+<a href=#504 id=504 data-nosnippet>504</a>//! #         pub message_instruction_index: u8,
+<a href=#505 id=505 data-nosnippet>505</a>//! #     }
+<a href=#506 id=506 data-nosnippet>506</a>//! #
+<a href=#507 id=507 data-nosnippet>507</a>//! #     pub fn iter_signature_offsets(
+<a href=#508 id=508 data-nosnippet>508</a>//! #        secp256k1_instr_data: &amp;[u8],
+<a href=#509 id=509 data-nosnippet>509</a>//! #     ) -&gt; Result&lt;impl Iterator&lt;Item = SecpSignatureOffsets&gt; + '_, ProgramError&gt; {
+<a href=#510 id=510 data-nosnippet>510</a>//! #         // First element is the number of `SecpSignatureOffsets`.
+<a href=#511 id=511 data-nosnippet>511</a>//! #         let num_structs = *secp256k1_instr_data
+<a href=#512 id=512 data-nosnippet>512</a>//! #             .get(0)
+<a href=#513 id=513 data-nosnippet>513</a>//! #             .ok_or(ProgramError::InvalidArgument)?;
+<a href=#514 id=514 data-nosnippet>514</a>//! #
+<a href=#515 id=515 data-nosnippet>515</a>//! #         let all_structs_size = SIGNATURE_OFFSETS_SERIALIZED_SIZE * num_structs as usize;
+<a href=#516 id=516 data-nosnippet>516</a>//! #         let all_structs_slice = secp256k1_instr_data
+<a href=#517 id=517 data-nosnippet>517</a>//! #             .get(1..all_structs_size + 1)
+<a href=#518 id=518 data-nosnippet>518</a>//! #             .ok_or(ProgramError::InvalidArgument)?;
+<a href=#519 id=519 data-nosnippet>519</a>//! #
+<a href=#520 id=520 data-nosnippet>520</a>//! #         fn decode_u16(chunk: &amp;[u8], index: usize) -&gt; u16 {
+<a href=#521 id=521 data-nosnippet>521</a>//! #             u16::from_le_bytes(&lt;[u8; 2]&gt;::try_from(&amp;chunk[index..index + 2]).unwrap())
+<a href=#522 id=522 data-nosnippet>522</a>//! #         }
+<a href=#523 id=523 data-nosnippet>523</a>//! #
+<a href=#524 id=524 data-nosnippet>524</a>//! #         Ok(all_structs_slice
+<a href=#525 id=525 data-nosnippet>525</a>//! #             .chunks(SIGNATURE_OFFSETS_SERIALIZED_SIZE)
+<a href=#526 id=526 data-nosnippet>526</a>//! #             .map(|chunk| SecpSignatureOffsets {
+<a href=#527 id=527 data-nosnippet>527</a>//! #                 signature_offset: decode_u16(chunk, 0),
+<a href=#528 id=528 data-nosnippet>528</a>//! #                 signature_instruction_index: chunk[2],
+<a href=#529 id=529 data-nosnippet>529</a>//! #                 eth_address_offset: decode_u16(chunk, 3),
+<a href=#530 id=530 data-nosnippet>530</a>//! #                 eth_address_instruction_index: chunk[5],
+<a href=#531 id=531 data-nosnippet>531</a>//! #                 message_data_offset: decode_u16(chunk, 6),
+<a href=#532 id=532 data-nosnippet>532</a>//! #                 message_data_size: decode_u16(chunk, 8),
+<a href=#533 id=533 data-nosnippet>533</a>//! #                 message_instruction_index: chunk[10],
+<a href=#534 id=534 data-nosnippet>534</a>//! #             }))
+<a href=#535 id=535 data-nosnippet>535</a>//! #     }
+<a href=#536 id=536 data-nosnippet>536</a>//! # }
+<a href=#537 id=537 data-nosnippet>537</a>//! use solana_program::{
+<a href=#538 id=538 data-nosnippet>538</a>//!     account_info::{next_account_info, AccountInfo},
+<a href=#539 id=539 data-nosnippet>539</a>//!     entrypoint::ProgramResult,
+<a href=#540 id=540 data-nosnippet>540</a>//!     msg,
+<a href=#541 id=541 data-nosnippet>541</a>//!     program_error::ProgramError,
+<a href=#542 id=542 data-nosnippet>542</a>//!     secp256k1_program,
+<a href=#543 id=543 data-nosnippet>543</a>//!     sysvar,
+<a href=#544 id=544 data-nosnippet>544</a>//! };
+<a href=#545 id=545 data-nosnippet>545</a>//!
+<a href=#546 id=546 data-nosnippet>546</a>//! /// A struct to hold the values specified in the `SecpSignatureOffsets` struct.
+<a href=#547 id=547 data-nosnippet>547</a>//! struct SecpSignature {
+<a href=#548 id=548 data-nosnippet>548</a>//!     signature: [u8; secp256k1_defs::SIGNATURE_SERIALIZED_SIZE],
+<a href=#549 id=549 data-nosnippet>549</a>//!     recovery_id: u8,
+<a href=#550 id=550 data-nosnippet>550</a>//!     eth_address: [u8; secp256k1_defs::HASHED_PUBKEY_SERIALIZED_SIZE],
+<a href=#551 id=551 data-nosnippet>551</a>//!     message: Vec&lt;u8&gt;,
+<a href=#552 id=552 data-nosnippet>552</a>//! }
+<a href=#553 id=553 data-nosnippet>553</a>//!
+<a href=#554 id=554 data-nosnippet>554</a>//! /// Load all signatures indicated in the secp256k1 instruction.
+<a href=#555 id=555 data-nosnippet>555</a>//! ///
+<a href=#556 id=556 data-nosnippet>556</a>//! /// This function is quite inefficient for reloading the same instructions
+<a href=#557 id=557 data-nosnippet>557</a>//! /// repeatedly and making copies and allocations.
+<a href=#558 id=558 data-nosnippet>558</a>//! fn load_signatures(
+<a href=#559 id=559 data-nosnippet>559</a>//!     secp256k1_instr_data: &amp;[u8],
+<a href=#560 id=560 data-nosnippet>560</a>//!     instructions_sysvar_account: &amp;AccountInfo,
+<a href=#561 id=561 data-nosnippet>561</a>//! ) -&gt; Result&lt;Vec&lt;SecpSignature&gt;, ProgramError&gt; {
+<a href=#562 id=562 data-nosnippet>562</a>//!     let mut sigs = vec![];
+<a href=#563 id=563 data-nosnippet>563</a>//!     for offsets in secp256k1_defs::iter_signature_offsets(secp256k1_instr_data)? {
+<a href=#564 id=564 data-nosnippet>564</a>//!         let signature_instr = sysvar::instructions::load_instruction_at_checked(
+<a href=#565 id=565 data-nosnippet>565</a>//!             offsets.signature_instruction_index as usize,
+<a href=#566 id=566 data-nosnippet>566</a>//!             instructions_sysvar_account,
+<a href=#567 id=567 data-nosnippet>567</a>//!         )?;
+<a href=#568 id=568 data-nosnippet>568</a>//!         let eth_address_instr = sysvar::instructions::load_instruction_at_checked(
+<a href=#569 id=569 data-nosnippet>569</a>//!             offsets.eth_address_instruction_index as usize,
+<a href=#570 id=570 data-nosnippet>570</a>//!             instructions_sysvar_account,
+<a href=#571 id=571 data-nosnippet>571</a>//!         )?;
+<a href=#572 id=572 data-nosnippet>572</a>//!         let message_instr = sysvar::instructions::load_instruction_at_checked(
+<a href=#573 id=573 data-nosnippet>573</a>//!             offsets.message_instruction_index as usize,
+<a href=#574 id=574 data-nosnippet>574</a>//!             instructions_sysvar_account,
+<a href=#575 id=575 data-nosnippet>575</a>//!         )?;
+<a href=#576 id=576 data-nosnippet>576</a>//!
+<a href=#577 id=577 data-nosnippet>577</a>//!         // These indexes must all be valid because the runtime already verified them.
+<a href=#578 id=578 data-nosnippet>578</a>//!         let signature = &amp;signature_instr.data[offsets.signature_offset as usize
+<a href=#579 id=579 data-nosnippet>579</a>//!             ..offsets.signature_offset as usize + secp256k1_defs::SIGNATURE_SERIALIZED_SIZE];
+<a href=#580 id=580 data-nosnippet>580</a>//!         let recovery_id = signature_instr.data
+<a href=#581 id=581 data-nosnippet>581</a>//!             [offsets.signature_offset as usize + secp256k1_defs::SIGNATURE_SERIALIZED_SIZE];
+<a href=#582 id=582 data-nosnippet>582</a>//!         let eth_address = &amp;eth_address_instr.data[offsets.eth_address_offset as usize
+<a href=#583 id=583 data-nosnippet>583</a>//!             ..offsets.eth_address_offset as usize + secp256k1_defs::HASHED_PUBKEY_SERIALIZED_SIZE];
+<a href=#584 id=584 data-nosnippet>584</a>//!         let message = &amp;message_instr.data[offsets.message_data_offset as usize
+<a href=#585 id=585 data-nosnippet>585</a>//!             ..offsets.message_data_offset as usize + offsets.message_data_size as usize];
+<a href=#586 id=586 data-nosnippet>586</a>//!
+<a href=#587 id=587 data-nosnippet>587</a>//!         let signature =
+<a href=#588 id=588 data-nosnippet>588</a>//!             &lt;[u8; secp256k1_defs::SIGNATURE_SERIALIZED_SIZE]&gt;::try_from(signature).unwrap();
+<a href=#589 id=589 data-nosnippet>589</a>//!         let eth_address =
+<a href=#590 id=590 data-nosnippet>590</a>//!             &lt;[u8; secp256k1_defs::HASHED_PUBKEY_SERIALIZED_SIZE]&gt;::try_from(eth_address).unwrap();
+<a href=#591 id=591 data-nosnippet>591</a>//!         let message = Vec::from(message);
+<a href=#592 id=592 data-nosnippet>592</a>//!
+<a href=#593 id=593 data-nosnippet>593</a>//!         sigs.push(SecpSignature {
+<a href=#594 id=594 data-nosnippet>594</a>//!             signature,
+<a href=#595 id=595 data-nosnippet>595</a>//!             recovery_id,
+<a href=#596 id=596 data-nosnippet>596</a>//!             eth_address,
+<a href=#597 id=597 data-nosnippet>597</a>//!             message,
+<a href=#598 id=598 data-nosnippet>598</a>//!         })
+<a href=#599 id=599 data-nosnippet>599</a>//!     }
+<a href=#600 id=600 data-nosnippet>600</a>//!     Ok(sigs)
+<a href=#601 id=601 data-nosnippet>601</a>//! }
+<a href=#602 id=602 data-nosnippet>602</a>//!
+<a href=#603 id=603 data-nosnippet>603</a>//! fn demo_secp256k1_custom_many(
+<a href=#604 id=604 data-nosnippet>604</a>//!     accounts: &amp;[AccountInfo],
+<a href=#605 id=605 data-nosnippet>605</a>//! ) -&gt; ProgramResult {
+<a href=#606 id=606 data-nosnippet>606</a>//!     let account_info_iter = &amp;mut accounts.iter();
+<a href=#607 id=607 data-nosnippet>607</a>//!
+<a href=#608 id=608 data-nosnippet>608</a>//!     let instructions_sysvar_account = next_account_info(account_info_iter)?;
+<a href=#609 id=609 data-nosnippet>609</a>//!     assert!(sysvar::instructions::check_id(
+<a href=#610 id=610 data-nosnippet>610</a>//!         instructions_sysvar_account.key
+<a href=#611 id=611 data-nosnippet>611</a>//!     ));
+<a href=#612 id=612 data-nosnippet>612</a>//!
+<a href=#613 id=613 data-nosnippet>613</a>//!     let secp256k1_instr =
+<a href=#614 id=614 data-nosnippet>614</a>//!         sysvar::instructions::get_instruction_relative(-1, instructions_sysvar_account)?;
+<a href=#615 id=615 data-nosnippet>615</a>//!
+<a href=#616 id=616 data-nosnippet>616</a>//!     assert!(secp256k1_program::check_id(&amp;secp256k1_instr.program_id));
+<a href=#617 id=617 data-nosnippet>617</a>//!
+<a href=#618 id=618 data-nosnippet>618</a>//!     let signatures = load_signatures(&amp;secp256k1_instr.data, instructions_sysvar_account)?;
+<a href=#619 id=619 data-nosnippet>619</a>//!     for (idx, signature_bundle) in signatures.iter().enumerate() {
+<a href=#620 id=620 data-nosnippet>620</a>//!         let signature = hex::encode(&amp;signature_bundle.signature);
+<a href=#621 id=621 data-nosnippet>621</a>//!         let eth_address = hex::encode(&amp;signature_bundle.eth_address);
+<a href=#622 id=622 data-nosnippet>622</a>//!         let message = hex::encode(&amp;signature_bundle.message);
+<a href=#623 id=623 data-nosnippet>623</a>//!         msg!("sig {}: {:?}", idx, signature);
+<a href=#624 id=624 data-nosnippet>624</a>//!         msg!("recid: {}: {}", idx, signature_bundle.recovery_id);
+<a href=#625 id=625 data-nosnippet>625</a>//!         msg!("eth address {}: {}", idx, eth_address);
+<a href=#626 id=626 data-nosnippet>626</a>//!         msg!("message {}: {}", idx, message);
+<a href=#627 id=627 data-nosnippet>627</a>//!     }
+<a href=#628 id=628 data-nosnippet>628</a>//!
+<a href=#629 id=629 data-nosnippet>629</a>//!     Ok(())
+<a href=#630 id=630 data-nosnippet>630</a>//! }
+<a href=#631 id=631 data-nosnippet>631</a>//! ```
+<a href=#632 id=632 data-nosnippet>632</a>//!
+<a href=#633 id=633 data-nosnippet>633</a>//! The client program:
+<a href=#634 id=634 data-nosnippet>634</a>//!
+<a href=#635 id=635 data-nosnippet>635</a>//! ```no_run
+<a href=#636 id=636 data-nosnippet>636</a>//! # use solana_sdk::example_mocks::solana_rpc_client;
+<a href=#637 id=637 data-nosnippet>637</a>//! use anyhow::Result;
+<a href=#638 id=638 data-nosnippet>638</a>//! use solana_rpc_client::rpc_client::RpcClient;
+<a href=#639 id=639 data-nosnippet>639</a>//! use solana_sdk::{
+<a href=#640 id=640 data-nosnippet>640</a>//!     instruction::{AccountMeta, Instruction},
+<a href=#641 id=641 data-nosnippet>641</a>//!     keccak,
+<a href=#642 id=642 data-nosnippet>642</a>//!     secp256k1_instruction::{
+<a href=#643 id=643 data-nosnippet>643</a>//!         self, SecpSignatureOffsets, HASHED_PUBKEY_SERIALIZED_SIZE,
+<a href=#644 id=644 data-nosnippet>644</a>//!         SIGNATURE_OFFSETS_SERIALIZED_SIZE, SIGNATURE_SERIALIZED_SIZE,
+<a href=#645 id=645 data-nosnippet>645</a>//!     },
+<a href=#646 id=646 data-nosnippet>646</a>//!     signature::{Keypair, Signer},
+<a href=#647 id=647 data-nosnippet>647</a>//!     sysvar,
+<a href=#648 id=648 data-nosnippet>648</a>//!     transaction::Transaction,
+<a href=#649 id=649 data-nosnippet>649</a>//! };
+<a href=#650 id=650 data-nosnippet>650</a>//!
+<a href=#651 id=651 data-nosnippet>651</a>//! /// A struct to hold the values specified in the `SecpSignatureOffsets` struct.
+<a href=#652 id=652 data-nosnippet>652</a>//! struct SecpSignature {
+<a href=#653 id=653 data-nosnippet>653</a>//!     signature: [u8; SIGNATURE_SERIALIZED_SIZE],
+<a href=#654 id=654 data-nosnippet>654</a>//!     recovery_id: u8,
+<a href=#655 id=655 data-nosnippet>655</a>//!     eth_address: [u8; HASHED_PUBKEY_SERIALIZED_SIZE],
+<a href=#656 id=656 data-nosnippet>656</a>//!     message: Vec&lt;u8&gt;,
+<a href=#657 id=657 data-nosnippet>657</a>//! }
+<a href=#658 id=658 data-nosnippet>658</a>//!
+<a href=#659 id=659 data-nosnippet>659</a>//! /// Create the instruction data for a secp256k1 instruction.
+<a href=#660 id=660 data-nosnippet>660</a>//! ///
+<a href=#661 id=661 data-nosnippet>661</a>//! /// `instruction_index` is the index the secp256k1 instruction will appear
+<a href=#662 id=662 data-nosnippet>662</a>//! /// within the transaction. For simplicity, this function only supports packing
+<a href=#663 id=663 data-nosnippet>663</a>//! /// the signatures into the secp256k1 instruction data, and not into any other
+<a href=#664 id=664 data-nosnippet>664</a>//! /// instructions within the transaction.
+<a href=#665 id=665 data-nosnippet>665</a>//! fn make_secp256k1_instruction_data(
+<a href=#666 id=666 data-nosnippet>666</a>//!     signatures: &amp;[SecpSignature],
+<a href=#667 id=667 data-nosnippet>667</a>//!     instruction_index: u8,
+<a href=#668 id=668 data-nosnippet>668</a>//! ) -&gt; Result&lt;Vec&lt;u8&gt;&gt; {
+<a href=#669 id=669 data-nosnippet>669</a>//!     assert!(signatures.len() &lt;= u8::max_value().into());
+<a href=#670 id=670 data-nosnippet>670</a>//!
+<a href=#671 id=671 data-nosnippet>671</a>//!     // We're going to pack all the signatures into the secp256k1 instruction data.
+<a href=#672 id=672 data-nosnippet>672</a>//!     // Before our signatures though is the signature offset structures
+<a href=#673 id=673 data-nosnippet>673</a>//!     // the secp256k1 program parses to find those signatures.
+<a href=#674 id=674 data-nosnippet>674</a>//!     // This value represents the byte offset where the signatures begin.
+<a href=#675 id=675 data-nosnippet>675</a>//!     let data_start = 1 + signatures.len() * SIGNATURE_OFFSETS_SERIALIZED_SIZE;
+<a href=#676 id=676 data-nosnippet>676</a>//!
+<a href=#677 id=677 data-nosnippet>677</a>//!     let mut signature_offsets = vec![];
+<a href=#678 id=678 data-nosnippet>678</a>//!     let mut signature_buffer = vec![];
+<a href=#679 id=679 data-nosnippet>679</a>//!
+<a href=#680 id=680 data-nosnippet>680</a>//!     for signature_bundle in signatures {
+<a href=#681 id=681 data-nosnippet>681</a>//!         let data_start = data_start
+<a href=#682 id=682 data-nosnippet>682</a>//!             .checked_add(signature_buffer.len())
+<a href=#683 id=683 data-nosnippet>683</a>//!             .expect("overflow");
+<a href=#684 id=684 data-nosnippet>684</a>//!
+<a href=#685 id=685 data-nosnippet>685</a>//!         let signature_offset = data_start;
+<a href=#686 id=686 data-nosnippet>686</a>//!         let eth_address_offset = data_start
+<a href=#687 id=687 data-nosnippet>687</a>//!             .checked_add(SIGNATURE_SERIALIZED_SIZE + 1)
+<a href=#688 id=688 data-nosnippet>688</a>//!             .expect("overflow");
+<a href=#689 id=689 data-nosnippet>689</a>//!         let message_data_offset = eth_address_offset
+<a href=#690 id=690 data-nosnippet>690</a>//!             .checked_add(HASHED_PUBKEY_SERIALIZED_SIZE)
+<a href=#691 id=691 data-nosnippet>691</a>//!             .expect("overflow");
+<a href=#692 id=692 data-nosnippet>692</a>//!         let message_data_size = signature_bundle.message.len();
+<a href=#693 id=693 data-nosnippet>693</a>//!
+<a href=#694 id=694 data-nosnippet>694</a>//!         let signature_offset = u16::try_from(signature_offset)?;
+<a href=#695 id=695 data-nosnippet>695</a>//!         let eth_address_offset = u16::try_from(eth_address_offset)?;
+<a href=#696 id=696 data-nosnippet>696</a>//!         let message_data_offset = u16::try_from(message_data_offset)?;
+<a href=#697 id=697 data-nosnippet>697</a>//!         let message_data_size = u16::try_from(message_data_size)?;
+<a href=#698 id=698 data-nosnippet>698</a>//!
+<a href=#699 id=699 data-nosnippet>699</a>//!         signature_offsets.push(SecpSignatureOffsets {
+<a href=#700 id=700 data-nosnippet>700</a>//!             signature_offset,
+<a href=#701 id=701 data-nosnippet>701</a>//!             signature_instruction_index: instruction_index,
+<a href=#702 id=702 data-nosnippet>702</a>//!             eth_address_offset,
+<a href=#703 id=703 data-nosnippet>703</a>//!             eth_address_instruction_index: instruction_index,
+<a href=#704 id=704 data-nosnippet>704</a>//!             message_data_offset,
+<a href=#705 id=705 data-nosnippet>705</a>//!             message_data_size,
+<a href=#706 id=706 data-nosnippet>706</a>//!             message_instruction_index: instruction_index,
+<a href=#707 id=707 data-nosnippet>707</a>//!         });
+<a href=#708 id=708 data-nosnippet>708</a>//!
+<a href=#709 id=709 data-nosnippet>709</a>//!         signature_buffer.extend(signature_bundle.signature);
+<a href=#710 id=710 data-nosnippet>710</a>//!         signature_buffer.push(signature_bundle.recovery_id);
+<a href=#711 id=711 data-nosnippet>711</a>//!         signature_buffer.extend(&amp;signature_bundle.eth_address);
+<a href=#712 id=712 data-nosnippet>712</a>//!         signature_buffer.extend(&amp;signature_bundle.message);
+<a href=#713 id=713 data-nosnippet>713</a>//!     }
+<a href=#714 id=714 data-nosnippet>714</a>//!
+<a href=#715 id=715 data-nosnippet>715</a>//!     let mut instr_data = vec![];
+<a href=#716 id=716 data-nosnippet>716</a>//!     instr_data.push(signatures.len() as u8);
+<a href=#717 id=717 data-nosnippet>717</a>//!
+<a href=#718 id=718 data-nosnippet>718</a>//!     for offsets in signature_offsets {
+<a href=#719 id=719 data-nosnippet>719</a>//!         let offsets = bincode::serialize(&amp;offsets)?;
+<a href=#720 id=720 data-nosnippet>720</a>//!         instr_data.extend(offsets);
+<a href=#721 id=721 data-nosnippet>721</a>//!     }
+<a href=#722 id=722 data-nosnippet>722</a>//!
+<a href=#723 id=723 data-nosnippet>723</a>//!     instr_data.extend(signature_buffer);
+<a href=#724 id=724 data-nosnippet>724</a>//!
+<a href=#725 id=725 data-nosnippet>725</a>//!     Ok(instr_data)
+<a href=#726 id=726 data-nosnippet>726</a>//! }
+<a href=#727 id=727 data-nosnippet>727</a>//!
+<a href=#728 id=728 data-nosnippet>728</a>//! fn demo_secp256k1_custom_many(
+<a href=#729 id=729 data-nosnippet>729</a>//!     payer_keypair: &amp;Keypair,
+<a href=#730 id=730 data-nosnippet>730</a>//!     client: &amp;RpcClient,
+<a href=#731 id=731 data-nosnippet>731</a>//!     program_keypair: &amp;Keypair,
+<a href=#732 id=732 data-nosnippet>732</a>//! ) -&gt; Result&lt;()&gt; {
+<a href=#733 id=733 data-nosnippet>733</a>//!     // Sign some messages.
+<a href=#734 id=734 data-nosnippet>734</a>//!     let mut signatures = vec![];
+<a href=#735 id=735 data-nosnippet>735</a>//!     for idx in 0..2 {
+<a href=#736 id=736 data-nosnippet>736</a>//!         let secret_key = libsecp256k1::SecretKey::random(&amp;mut rand0_7::thread_rng());
+<a href=#737 id=737 data-nosnippet>737</a>//!         let message = format!("hello world {}", idx).into_bytes();
+<a href=#738 id=738 data-nosnippet>738</a>//!         let message_hash = {
+<a href=#739 id=739 data-nosnippet>739</a>//!             let mut hasher = keccak::Hasher::default();
+<a href=#740 id=740 data-nosnippet>740</a>//!             hasher.hash(&amp;message);
+<a href=#741 id=741 data-nosnippet>741</a>//!             hasher.result()
+<a href=#742 id=742 data-nosnippet>742</a>//!         };
+<a href=#743 id=743 data-nosnippet>743</a>//!         let secp_message = libsecp256k1::Message::parse(&amp;message_hash.0);
+<a href=#744 id=744 data-nosnippet>744</a>//!         let (signature, recovery_id) = libsecp256k1::sign(&amp;secp_message, &amp;secret_key);
+<a href=#745 id=745 data-nosnippet>745</a>//!         let signature = signature.serialize();
+<a href=#746 id=746 data-nosnippet>746</a>//!         let recovery_id = recovery_id.serialize();
+<a href=#747 id=747 data-nosnippet>747</a>//!
+<a href=#748 id=748 data-nosnippet>748</a>//!         let public_key = libsecp256k1::PublicKey::from_secret_key(&amp;secret_key);
+<a href=#749 id=749 data-nosnippet>749</a>//!         let eth_address = secp256k1_instruction::construct_eth_pubkey(&amp;public_key);
+<a href=#750 id=750 data-nosnippet>750</a>//!
+<a href=#751 id=751 data-nosnippet>751</a>//!         signatures.push(SecpSignature {
+<a href=#752 id=752 data-nosnippet>752</a>//!             signature,
+<a href=#753 id=753 data-nosnippet>753</a>//!             recovery_id,
+<a href=#754 id=754 data-nosnippet>754</a>//!             eth_address,
+<a href=#755 id=755 data-nosnippet>755</a>//!             message,
+<a href=#756 id=756 data-nosnippet>756</a>//!         });
+<a href=#757 id=757 data-nosnippet>757</a>//!     }
+<a href=#758 id=758 data-nosnippet>758</a>//!
+<a href=#759 id=759 data-nosnippet>759</a>//!     let secp256k1_instr_data = make_secp256k1_instruction_data(&amp;signatures, 0)?;
+<a href=#760 id=760 data-nosnippet>760</a>//!     let secp256k1_instr = Instruction::new_with_bytes(
+<a href=#761 id=761 data-nosnippet>761</a>//!         solana_sdk::secp256k1_program::ID,
+<a href=#762 id=762 data-nosnippet>762</a>//!         &amp;secp256k1_instr_data,
+<a href=#763 id=763 data-nosnippet>763</a>//!         vec![],
+<a href=#764 id=764 data-nosnippet>764</a>//!     );
+<a href=#765 id=765 data-nosnippet>765</a>//!
+<a href=#766 id=766 data-nosnippet>766</a>//!     let program_instr = Instruction::new_with_bytes(
+<a href=#767 id=767 data-nosnippet>767</a>//!         program_keypair.pubkey(),
+<a href=#768 id=768 data-nosnippet>768</a>//!         &amp;[],
+<a href=#769 id=769 data-nosnippet>769</a>//!         vec![
+<a href=#770 id=770 data-nosnippet>770</a>//!             AccountMeta::new_readonly(sysvar::instructions::ID, false)
+<a href=#771 id=771 data-nosnippet>771</a>//!         ],
+<a href=#772 id=772 data-nosnippet>772</a>//!     );
+<a href=#773 id=773 data-nosnippet>773</a>//!
+<a href=#774 id=774 data-nosnippet>774</a>//!     let blockhash = client.get_latest_blockhash()?;
+<a href=#775 id=775 data-nosnippet>775</a>//!     let tx = Transaction::new_signed_with_payer(
+<a href=#776 id=776 data-nosnippet>776</a>//!         &amp;[secp256k1_instr, program_instr],
+<a href=#777 id=777 data-nosnippet>777</a>//!         Some(&amp;payer_keypair.pubkey()),
+<a href=#778 id=778 data-nosnippet>778</a>//!         &amp;[payer_keypair],
+<a href=#779 id=779 data-nosnippet>779</a>//!         blockhash,
+<a href=#780 id=780 data-nosnippet>780</a>//!     );
+<a href=#781 id=781 data-nosnippet>781</a>//!
+<a href=#782 id=782 data-nosnippet>782</a>//!     client.send_and_confirm_transaction(&amp;tx)?;
+<a href=#783 id=783 data-nosnippet>783</a>//!
+<a href=#784 id=784 data-nosnippet>784</a>//!     Ok(())
+<a href=#785 id=785 data-nosnippet>785</a>//! }
+<a href=#786 id=786 data-nosnippet>786</a>//! ```
+<a href=#787 id=787 data-nosnippet>787</a>
+<a href=#788 id=788 data-nosnippet>788</a></span><span class="attr">#![cfg(feature = <span class="string">"full"</span>)]
+<a href=#789 id=789 data-nosnippet>789</a>
+<a href=#790 id=790 data-nosnippet>790</a></span><span class="kw">use </span>{
+<a href=#791 id=791 data-nosnippet>791</a>    <span class="kw">crate</span>::{
+<a href=#792 id=792 data-nosnippet>792</a>        feature_set::{
+<a href=#793 id=793 data-nosnippet>793</a>            libsecp256k1_fail_on_bad_count, libsecp256k1_fail_on_bad_count2, FeatureSet,
+<a href=#794 id=794 data-nosnippet>794</a>        },
+<a href=#795 id=795 data-nosnippet>795</a>        instruction::Instruction,
+<a href=#796 id=796 data-nosnippet>796</a>        precompiles::PrecompileError,
+<a href=#797 id=797 data-nosnippet>797</a>    },
+<a href=#798 id=798 data-nosnippet>798</a>    digest::Digest,
+<a href=#799 id=799 data-nosnippet>799</a>    serde_derive::{Deserialize, Serialize},
+<a href=#800 id=800 data-nosnippet>800</a>};
+<a href=#801 id=801 data-nosnippet>801</a>
+<a href=#802 id=802 data-nosnippet>802</a><span class="kw">pub const </span>HASHED_PUBKEY_SERIALIZED_SIZE: usize = <span class="number">20</span>;
+<a href=#803 id=803 data-nosnippet>803</a><span class="kw">pub const </span>SIGNATURE_SERIALIZED_SIZE: usize = <span class="number">64</span>;
+<a href=#804 id=804 data-nosnippet>804</a><span class="kw">pub const </span>SIGNATURE_OFFSETS_SERIALIZED_SIZE: usize = <span class="number">11</span>;
+<a href=#805 id=805 data-nosnippet>805</a><span class="kw">pub const </span>DATA_START: usize = SIGNATURE_OFFSETS_SERIALIZED_SIZE + <span class="number">1</span>;
+<a href=#806 id=806 data-nosnippet>806</a>
+<a href=#807 id=807 data-nosnippet>807</a><span class="doccomment">/// Offsets of signature data within a secp256k1 instruction.
+<a href=#808 id=808 data-nosnippet>808</a>///
+<a href=#809 id=809 data-nosnippet>809</a>/// See the [module documentation][md] for a complete description.
+<a href=#810 id=810 data-nosnippet>810</a>///
+<a href=#811 id=811 data-nosnippet>811</a>/// [md]: self
+<a href=#812 id=812 data-nosnippet>812</a></span><span class="attr">#[derive(Default, Serialize, Deserialize, Debug, Eq, PartialEq)]
+<a href=#813 id=813 data-nosnippet>813</a></span><span class="kw">pub struct </span>SecpSignatureOffsets {
+<a href=#814 id=814 data-nosnippet>814</a>    <span class="doccomment">/// Offset to 64-byte signature plus 1-byte recovery ID.
+<a href=#815 id=815 data-nosnippet>815</a>    </span><span class="kw">pub </span>signature_offset: u16,
+<a href=#816 id=816 data-nosnippet>816</a>    <span class="doccomment">/// Within the transaction, the index of the instruction whose instruction data contains the signature.
+<a href=#817 id=817 data-nosnippet>817</a>    </span><span class="kw">pub </span>signature_instruction_index: u8,
+<a href=#818 id=818 data-nosnippet>818</a>    <span class="doccomment">/// Offset to 20-byte Ethereum address.
+<a href=#819 id=819 data-nosnippet>819</a>    </span><span class="kw">pub </span>eth_address_offset: u16,
+<a href=#820 id=820 data-nosnippet>820</a>    <span class="doccomment">/// Within the transaction, the index of the instruction whose instruction data contains the address.
+<a href=#821 id=821 data-nosnippet>821</a>    </span><span class="kw">pub </span>eth_address_instruction_index: u8,
+<a href=#822 id=822 data-nosnippet>822</a>    <span class="doccomment">/// Offset to start of message data.
+<a href=#823 id=823 data-nosnippet>823</a>    </span><span class="kw">pub </span>message_data_offset: u16,
+<a href=#824 id=824 data-nosnippet>824</a>    <span class="doccomment">/// Size of message data in bytes.
+<a href=#825 id=825 data-nosnippet>825</a>    </span><span class="kw">pub </span>message_data_size: u16,
+<a href=#826 id=826 data-nosnippet>826</a>    <span class="doccomment">/// Within the transaction, the index of the instruction whose instruction data contains the message.
+<a href=#827 id=827 data-nosnippet>827</a>    </span><span class="kw">pub </span>message_instruction_index: u8,
+<a href=#828 id=828 data-nosnippet>828</a>}
+<a href=#829 id=829 data-nosnippet>829</a>
+<a href=#830 id=830 data-nosnippet>830</a><span class="doccomment">/// Sign a message and create a secp256k1 program instruction to verify the signature.
+<a href=#831 id=831 data-nosnippet>831</a>///
+<a href=#832 id=832 data-nosnippet>832</a>/// This function is suitable for simple uses of the secp256k1 program.
+<a href=#833 id=833 data-nosnippet>833</a>/// More complex uses must encode the secp256k1 instruction data manually.
+<a href=#834 id=834 data-nosnippet>834</a>/// See the [module documentation][md] for examples.
+<a href=#835 id=835 data-nosnippet>835</a>///
+<a href=#836 id=836 data-nosnippet>836</a>/// [md]: self
+<a href=#837 id=837 data-nosnippet>837</a>///
+<a href=#838 id=838 data-nosnippet>838</a>/// The instruction generated by this function must be the first instruction
+<a href=#839 id=839 data-nosnippet>839</a>/// included in a transaction or it will not verify. The
+<a href=#840 id=840 data-nosnippet>840</a>/// [`SecpSignatureOffsets`] structure encoded in the instruction data specify
+<a href=#841 id=841 data-nosnippet>841</a>/// the instruction indexes as 0.
+<a href=#842 id=842 data-nosnippet>842</a>///
+<a href=#843 id=843 data-nosnippet>843</a>/// `message_arr` is hashed with the [`keccak`] hash function prior to signing.
+<a href=#844 id=844 data-nosnippet>844</a>///
+<a href=#845 id=845 data-nosnippet>845</a>/// [`keccak`]: crate::keccak
+<a href=#846 id=846 data-nosnippet>846</a></span><span class="kw">pub fn </span>new_secp256k1_instruction(
+<a href=#847 id=847 data-nosnippet>847</a>    priv_key: <span class="kw-2">&amp;</span>libsecp256k1::SecretKey,
+<a href=#848 id=848 data-nosnippet>848</a>    message_arr: <span class="kw-2">&amp;</span>[u8],
+<a href=#849 id=849 data-nosnippet>849</a>) -&gt; Instruction {
+<a href=#850 id=850 data-nosnippet>850</a>    <span class="kw">let </span>secp_pubkey = libsecp256k1::PublicKey::from_secret_key(priv_key);
+<a href=#851 id=851 data-nosnippet>851</a>    <span class="kw">let </span>eth_pubkey = construct_eth_pubkey(<span class="kw-2">&amp;</span>secp_pubkey);
+<a href=#852 id=852 data-nosnippet>852</a>    <span class="kw">let </span><span class="kw-2">mut </span>hasher = sha3::Keccak256::new();
+<a href=#853 id=853 data-nosnippet>853</a>    hasher.update(message_arr);
+<a href=#854 id=854 data-nosnippet>854</a>    <span class="kw">let </span>message_hash = hasher.finalize();
+<a href=#855 id=855 data-nosnippet>855</a>    <span class="kw">let </span><span class="kw-2">mut </span>message_hash_arr = [<span class="number">0u8</span>; <span class="number">32</span>];
+<a href=#856 id=856 data-nosnippet>856</a>    message_hash_arr.copy_from_slice(message_hash.as_slice());
+<a href=#857 id=857 data-nosnippet>857</a>    <span class="kw">let </span>message = libsecp256k1::Message::parse(<span class="kw-2">&amp;</span>message_hash_arr);
+<a href=#858 id=858 data-nosnippet>858</a>    <span class="kw">let </span>(signature, recovery_id) = libsecp256k1::sign(<span class="kw-2">&amp;</span>message, priv_key);
+<a href=#859 id=859 data-nosnippet>859</a>    <span class="kw">let </span>signature_arr = signature.serialize();
+<a href=#860 id=860 data-nosnippet>860</a>    <span class="macro">assert_eq!</span>(signature_arr.len(), SIGNATURE_SERIALIZED_SIZE);
+<a href=#861 id=861 data-nosnippet>861</a>
+<a href=#862 id=862 data-nosnippet>862</a>    <span class="kw">let </span>instruction_data_len = DATA_START
+<a href=#863 id=863 data-nosnippet>863</a>        .saturating_add(eth_pubkey.len())
+<a href=#864 id=864 data-nosnippet>864</a>        .saturating_add(signature_arr.len())
+<a href=#865 id=865 data-nosnippet>865</a>        .saturating_add(message_arr.len())
+<a href=#866 id=866 data-nosnippet>866</a>        .saturating_add(<span class="number">1</span>);
+<a href=#867 id=867 data-nosnippet>867</a>    <span class="kw">let </span><span class="kw-2">mut </span>instruction_data = <span class="macro">vec!</span>[<span class="number">0</span>; instruction_data_len];
+<a href=#868 id=868 data-nosnippet>868</a>
+<a href=#869 id=869 data-nosnippet>869</a>    <span class="kw">let </span>eth_address_offset = DATA_START;
+<a href=#870 id=870 data-nosnippet>870</a>    instruction_data[eth_address_offset..eth_address_offset.saturating_add(eth_pubkey.len())]
+<a href=#871 id=871 data-nosnippet>871</a>        .copy_from_slice(<span class="kw-2">&amp;</span>eth_pubkey);
+<a href=#872 id=872 data-nosnippet>872</a>
+<a href=#873 id=873 data-nosnippet>873</a>    <span class="kw">let </span>signature_offset = DATA_START.saturating_add(eth_pubkey.len());
+<a href=#874 id=874 data-nosnippet>874</a>    instruction_data[signature_offset..signature_offset.saturating_add(signature_arr.len())]
+<a href=#875 id=875 data-nosnippet>875</a>        .copy_from_slice(<span class="kw-2">&amp;</span>signature_arr);
+<a href=#876 id=876 data-nosnippet>876</a>
+<a href=#877 id=877 data-nosnippet>877</a>    instruction_data[signature_offset.saturating_add(signature_arr.len())] =
+<a href=#878 id=878 data-nosnippet>878</a>        recovery_id.serialize();
+<a href=#879 id=879 data-nosnippet>879</a>
+<a href=#880 id=880 data-nosnippet>880</a>    <span class="kw">let </span>message_data_offset = signature_offset
+<a href=#881 id=881 data-nosnippet>881</a>        .saturating_add(signature_arr.len())
+<a href=#882 id=882 data-nosnippet>882</a>        .saturating_add(<span class="number">1</span>);
+<a href=#883 id=883 data-nosnippet>883</a>    instruction_data[message_data_offset..].copy_from_slice(message_arr);
+<a href=#884 id=884 data-nosnippet>884</a>
+<a href=#885 id=885 data-nosnippet>885</a>    <span class="kw">let </span>num_signatures = <span class="number">1</span>;
+<a href=#886 id=886 data-nosnippet>886</a>    instruction_data[<span class="number">0</span>] = num_signatures;
+<a href=#887 id=887 data-nosnippet>887</a>    <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#888 id=888 data-nosnippet>888</a>        signature_offset: signature_offset <span class="kw">as </span>u16,
+<a href=#889 id=889 data-nosnippet>889</a>        signature_instruction_index: <span class="number">0</span>,
+<a href=#890 id=890 data-nosnippet>890</a>        eth_address_offset: eth_address_offset <span class="kw">as </span>u16,
+<a href=#891 id=891 data-nosnippet>891</a>        eth_address_instruction_index: <span class="number">0</span>,
+<a href=#892 id=892 data-nosnippet>892</a>        message_data_offset: message_data_offset <span class="kw">as </span>u16,
+<a href=#893 id=893 data-nosnippet>893</a>        message_data_size: message_arr.len() <span class="kw">as </span>u16,
+<a href=#894 id=894 data-nosnippet>894</a>        message_instruction_index: <span class="number">0</span>,
+<a href=#895 id=895 data-nosnippet>895</a>    };
+<a href=#896 id=896 data-nosnippet>896</a>    <span class="kw">let </span>writer = std::io::Cursor::new(<span class="kw-2">&amp;mut </span>instruction_data[<span class="number">1</span>..DATA_START]);
+<a href=#897 id=897 data-nosnippet>897</a>    bincode::serialize_into(writer, <span class="kw-2">&amp;</span>offsets).unwrap();
+<a href=#898 id=898 data-nosnippet>898</a>
+<a href=#899 id=899 data-nosnippet>899</a>    Instruction {
+<a href=#900 id=900 data-nosnippet>900</a>        program_id: solana_sdk::secp256k1_program::id(),
+<a href=#901 id=901 data-nosnippet>901</a>        accounts: <span class="macro">vec!</span>[],
+<a href=#902 id=902 data-nosnippet>902</a>        data: instruction_data,
+<a href=#903 id=903 data-nosnippet>903</a>    }
+<a href=#904 id=904 data-nosnippet>904</a>}
+<a href=#905 id=905 data-nosnippet>905</a>
+<a href=#906 id=906 data-nosnippet>906</a><span class="doccomment">/// Creates an Ethereum address from a secp256k1 public key.
+<a href=#907 id=907 data-nosnippet>907</a></span><span class="kw">pub fn </span>construct_eth_pubkey(
+<a href=#908 id=908 data-nosnippet>908</a>    pubkey: <span class="kw-2">&amp;</span>libsecp256k1::PublicKey,
+<a href=#909 id=909 data-nosnippet>909</a>) -&gt; [u8; HASHED_PUBKEY_SERIALIZED_SIZE] {
+<a href=#910 id=910 data-nosnippet>910</a>    <span class="kw">let </span><span class="kw-2">mut </span>addr = [<span class="number">0u8</span>; HASHED_PUBKEY_SERIALIZED_SIZE];
+<a href=#911 id=911 data-nosnippet>911</a>    addr.copy_from_slice(<span class="kw-2">&amp;</span>sha3::Keccak256::digest(<span class="kw-2">&amp;</span>pubkey.serialize()[<span class="number">1</span>..])[<span class="number">12</span>..]);
+<a href=#912 id=912 data-nosnippet>912</a>    <span class="macro">assert_eq!</span>(addr.len(), HASHED_PUBKEY_SERIALIZED_SIZE);
+<a href=#913 id=913 data-nosnippet>913</a>    addr
+<a href=#914 id=914 data-nosnippet>914</a>}
+<a href=#915 id=915 data-nosnippet>915</a>
+<a href=#916 id=916 data-nosnippet>916</a><span class="doccomment">/// Verifies the signatures specified in the secp256k1 instruction data.
+<a href=#917 id=917 data-nosnippet>917</a>///
+<a href=#918 id=918 data-nosnippet>918</a>/// This is same the verification routine executed by the runtime's secp256k1 native program,
+<a href=#919 id=919 data-nosnippet>919</a>/// and is primarily of use to the runtime.
+<a href=#920 id=920 data-nosnippet>920</a>///
+<a href=#921 id=921 data-nosnippet>921</a>/// `data` is the secp256k1 program's instruction data. `instruction_datas` is
+<a href=#922 id=922 data-nosnippet>922</a>/// the full slice of instruction datas for all instructions in the transaction,
+<a href=#923 id=923 data-nosnippet>923</a>/// including the secp256k1 program's instruction data.
+<a href=#924 id=924 data-nosnippet>924</a>///
+<a href=#925 id=925 data-nosnippet>925</a>/// `feature_set` is the set of active Solana features. It is used to enable or
+<a href=#926 id=926 data-nosnippet>926</a>/// disable a few minor additional checks that were activated on chain
+<a href=#927 id=927 data-nosnippet>927</a>/// subsequent to the addition of the secp256k1 native program. For many
+<a href=#928 id=928 data-nosnippet>928</a>/// purposes passing `FeatureSet::all_enabled()` is reasonable.
+<a href=#929 id=929 data-nosnippet>929</a></span><span class="kw">pub fn </span>verify(
+<a href=#930 id=930 data-nosnippet>930</a>    data: <span class="kw-2">&amp;</span>[u8],
+<a href=#931 id=931 data-nosnippet>931</a>    instruction_datas: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[u8]],
+<a href=#932 id=932 data-nosnippet>932</a>    feature_set: <span class="kw-2">&amp;</span>FeatureSet,
+<a href=#933 id=933 data-nosnippet>933</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), PrecompileError&gt; {
+<a href=#934 id=934 data-nosnippet>934</a>    <span class="kw">if </span>data.is_empty() {
+<a href=#935 id=935 data-nosnippet>935</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(PrecompileError::InvalidInstructionDataSize);
+<a href=#936 id=936 data-nosnippet>936</a>    }
+<a href=#937 id=937 data-nosnippet>937</a>    <span class="kw">let </span>count = data[<span class="number">0</span>] <span class="kw">as </span>usize;
+<a href=#938 id=938 data-nosnippet>938</a>    <span class="kw">if </span>(feature_set.is_active(<span class="kw-2">&amp;</span>libsecp256k1_fail_on_bad_count::id())
+<a href=#939 id=939 data-nosnippet>939</a>        || feature_set.is_active(<span class="kw-2">&amp;</span>libsecp256k1_fail_on_bad_count2::id()))
+<a href=#940 id=940 data-nosnippet>940</a>        &amp;&amp; count == <span class="number">0
+<a href=#941 id=941 data-nosnippet>941</a>        </span>&amp;&amp; data.len() &gt; <span class="number">1
+<a href=#942 id=942 data-nosnippet>942</a>    </span>{
+<a href=#943 id=943 data-nosnippet>943</a>        <span class="comment">// count is zero but the instruction data indicates that is probably not
+<a href=#944 id=944 data-nosnippet>944</a>        // correct, fail the instruction to catch probable invalid secp256k1
+<a href=#945 id=945 data-nosnippet>945</a>        // instruction construction.
+<a href=#946 id=946 data-nosnippet>946</a>        </span><span class="kw">return </span><span class="prelude-val">Err</span>(PrecompileError::InvalidInstructionDataSize);
+<a href=#947 id=947 data-nosnippet>947</a>    }
+<a href=#948 id=948 data-nosnippet>948</a>    <span class="kw">let </span>expected_data_size = count
+<a href=#949 id=949 data-nosnippet>949</a>        .saturating_mul(SIGNATURE_OFFSETS_SERIALIZED_SIZE)
+<a href=#950 id=950 data-nosnippet>950</a>        .saturating_add(<span class="number">1</span>);
+<a href=#951 id=951 data-nosnippet>951</a>    <span class="kw">if </span>data.len() &lt; expected_data_size {
+<a href=#952 id=952 data-nosnippet>952</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(PrecompileError::InvalidInstructionDataSize);
+<a href=#953 id=953 data-nosnippet>953</a>    }
+<a href=#954 id=954 data-nosnippet>954</a>    <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..count {
+<a href=#955 id=955 data-nosnippet>955</a>        <span class="kw">let </span>start = i
+<a href=#956 id=956 data-nosnippet>956</a>            .saturating_mul(SIGNATURE_OFFSETS_SERIALIZED_SIZE)
+<a href=#957 id=957 data-nosnippet>957</a>            .saturating_add(<span class="number">1</span>);
+<a href=#958 id=958 data-nosnippet>958</a>        <span class="kw">let </span>end = start.saturating_add(SIGNATURE_OFFSETS_SERIALIZED_SIZE);
+<a href=#959 id=959 data-nosnippet>959</a>
+<a href=#960 id=960 data-nosnippet>960</a>        <span class="kw">let </span>offsets: SecpSignatureOffsets = bincode::deserialize(<span class="kw-2">&amp;</span>data[start..end])
+<a href=#961 id=961 data-nosnippet>961</a>            .map_err(|<span class="kw">_</span>| PrecompileError::InvalidSignature)<span class="question-mark">?</span>;
+<a href=#962 id=962 data-nosnippet>962</a>
+<a href=#963 id=963 data-nosnippet>963</a>        <span class="comment">// Parse out signature
+<a href=#964 id=964 data-nosnippet>964</a>        </span><span class="kw">let </span>signature_index = offsets.signature_instruction_index <span class="kw">as </span>usize;
+<a href=#965 id=965 data-nosnippet>965</a>        <span class="kw">if </span>signature_index &gt;= instruction_datas.len() {
+<a href=#966 id=966 data-nosnippet>966</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(PrecompileError::InvalidInstructionDataSize);
+<a href=#967 id=967 data-nosnippet>967</a>        }
+<a href=#968 id=968 data-nosnippet>968</a>        <span class="kw">let </span>signature_instruction = instruction_datas[signature_index];
+<a href=#969 id=969 data-nosnippet>969</a>        <span class="kw">let </span>sig_start = offsets.signature_offset <span class="kw">as </span>usize;
+<a href=#970 id=970 data-nosnippet>970</a>        <span class="kw">let </span>sig_end = sig_start.saturating_add(SIGNATURE_SERIALIZED_SIZE);
+<a href=#971 id=971 data-nosnippet>971</a>        <span class="kw">if </span>sig_end &gt;= signature_instruction.len() {
+<a href=#972 id=972 data-nosnippet>972</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(PrecompileError::InvalidSignature);
+<a href=#973 id=973 data-nosnippet>973</a>        }
+<a href=#974 id=974 data-nosnippet>974</a>
+<a href=#975 id=975 data-nosnippet>975</a>        <span class="kw">let </span>signature = libsecp256k1::Signature::parse_standard_slice(
+<a href=#976 id=976 data-nosnippet>976</a>            <span class="kw-2">&amp;</span>signature_instruction[sig_start..sig_end],
+<a href=#977 id=977 data-nosnippet>977</a>        )
+<a href=#978 id=978 data-nosnippet>978</a>        .map_err(|<span class="kw">_</span>| PrecompileError::InvalidSignature)<span class="question-mark">?</span>;
+<a href=#979 id=979 data-nosnippet>979</a>
+<a href=#980 id=980 data-nosnippet>980</a>        <span class="kw">let </span>recovery_id = libsecp256k1::RecoveryId::parse(signature_instruction[sig_end])
+<a href=#981 id=981 data-nosnippet>981</a>            .map_err(|<span class="kw">_</span>| PrecompileError::InvalidRecoveryId)<span class="question-mark">?</span>;
+<a href=#982 id=982 data-nosnippet>982</a>
+<a href=#983 id=983 data-nosnippet>983</a>        <span class="comment">// Parse out pubkey
+<a href=#984 id=984 data-nosnippet>984</a>        </span><span class="kw">let </span>eth_address_slice = get_data_slice(
+<a href=#985 id=985 data-nosnippet>985</a>            instruction_datas,
+<a href=#986 id=986 data-nosnippet>986</a>            offsets.eth_address_instruction_index,
+<a href=#987 id=987 data-nosnippet>987</a>            offsets.eth_address_offset,
+<a href=#988 id=988 data-nosnippet>988</a>            HASHED_PUBKEY_SERIALIZED_SIZE,
+<a href=#989 id=989 data-nosnippet>989</a>        )<span class="question-mark">?</span>;
+<a href=#990 id=990 data-nosnippet>990</a>
+<a href=#991 id=991 data-nosnippet>991</a>        <span class="comment">// Parse out message
+<a href=#992 id=992 data-nosnippet>992</a>        </span><span class="kw">let </span>message_slice = get_data_slice(
+<a href=#993 id=993 data-nosnippet>993</a>            instruction_datas,
+<a href=#994 id=994 data-nosnippet>994</a>            offsets.message_instruction_index,
+<a href=#995 id=995 data-nosnippet>995</a>            offsets.message_data_offset,
+<a href=#996 id=996 data-nosnippet>996</a>            offsets.message_data_size <span class="kw">as </span>usize,
+<a href=#997 id=997 data-nosnippet>997</a>        )<span class="question-mark">?</span>;
+<a href=#998 id=998 data-nosnippet>998</a>
+<a href=#999 id=999 data-nosnippet>999</a>        <span class="kw">let </span><span class="kw-2">mut </span>hasher = sha3::Keccak256::new();
+<a href=#1000 id=1000 data-nosnippet>1000</a>        hasher.update(message_slice);
+<a href=#1001 id=1001 data-nosnippet>1001</a>        <span class="kw">let </span>message_hash = hasher.finalize();
+<a href=#1002 id=1002 data-nosnippet>1002</a>
+<a href=#1003 id=1003 data-nosnippet>1003</a>        <span class="kw">let </span>pubkey = libsecp256k1::recover(
+<a href=#1004 id=1004 data-nosnippet>1004</a>            <span class="kw-2">&amp;</span>libsecp256k1::Message::parse_slice(<span class="kw-2">&amp;</span>message_hash).unwrap(),
+<a href=#1005 id=1005 data-nosnippet>1005</a>            <span class="kw-2">&amp;</span>signature,
+<a href=#1006 id=1006 data-nosnippet>1006</a>            <span class="kw-2">&amp;</span>recovery_id,
+<a href=#1007 id=1007 data-nosnippet>1007</a>        )
+<a href=#1008 id=1008 data-nosnippet>1008</a>        .map_err(|<span class="kw">_</span>| PrecompileError::InvalidSignature)<span class="question-mark">?</span>;
+<a href=#1009 id=1009 data-nosnippet>1009</a>        <span class="kw">let </span>eth_address = construct_eth_pubkey(<span class="kw-2">&amp;</span>pubkey);
+<a href=#1010 id=1010 data-nosnippet>1010</a>
+<a href=#1011 id=1011 data-nosnippet>1011</a>        <span class="kw">if </span>eth_address_slice != eth_address {
+<a href=#1012 id=1012 data-nosnippet>1012</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(PrecompileError::InvalidSignature);
+<a href=#1013 id=1013 data-nosnippet>1013</a>        }
+<a href=#1014 id=1014 data-nosnippet>1014</a>    }
+<a href=#1015 id=1015 data-nosnippet>1015</a>    <span class="prelude-val">Ok</span>(())
+<a href=#1016 id=1016 data-nosnippet>1016</a>}
+<a href=#1017 id=1017 data-nosnippet>1017</a>
+<a href=#1018 id=1018 data-nosnippet>1018</a><span class="kw">fn </span>get_data_slice&lt;<span class="lifetime">'a</span>&gt;(
+<a href=#1019 id=1019 data-nosnippet>1019</a>    instruction_datas: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span>[u8]],
+<a href=#1020 id=1020 data-nosnippet>1020</a>    instruction_index: u8,
+<a href=#1021 id=1021 data-nosnippet>1021</a>    offset_start: u16,
+<a href=#1022 id=1022 data-nosnippet>1022</a>    size: usize,
+<a href=#1023 id=1023 data-nosnippet>1023</a>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8], PrecompileError&gt; {
+<a href=#1024 id=1024 data-nosnippet>1024</a>    <span class="kw">let </span>signature_index = instruction_index <span class="kw">as </span>usize;
+<a href=#1025 id=1025 data-nosnippet>1025</a>    <span class="kw">if </span>signature_index &gt;= instruction_datas.len() {
+<a href=#1026 id=1026 data-nosnippet>1026</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(PrecompileError::InvalidDataOffsets);
+<a href=#1027 id=1027 data-nosnippet>1027</a>    }
+<a href=#1028 id=1028 data-nosnippet>1028</a>    <span class="kw">let </span>signature_instruction = <span class="kw-2">&amp;</span>instruction_datas[signature_index];
+<a href=#1029 id=1029 data-nosnippet>1029</a>    <span class="kw">let </span>start = offset_start <span class="kw">as </span>usize;
+<a href=#1030 id=1030 data-nosnippet>1030</a>    <span class="kw">let </span>end = start.saturating_add(size);
+<a href=#1031 id=1031 data-nosnippet>1031</a>    <span class="kw">if </span>end &gt; signature_instruction.len() {
+<a href=#1032 id=1032 data-nosnippet>1032</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(PrecompileError::InvalidSignature);
+<a href=#1033 id=1033 data-nosnippet>1033</a>    }
+<a href=#1034 id=1034 data-nosnippet>1034</a>
+<a href=#1035 id=1035 data-nosnippet>1035</a>    <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>instruction_datas[signature_index][start..end])
+<a href=#1036 id=1036 data-nosnippet>1036</a>}
+<a href=#1037 id=1037 data-nosnippet>1037</a>
+<a href=#1038 id=1038 data-nosnippet>1038</a><span class="attr">#[cfg(test)]
+<a href=#1039 id=1039 data-nosnippet>1039</a></span><span class="kw">pub mod </span>test {
+<a href=#1040 id=1040 data-nosnippet>1040</a>    <span class="kw">use </span>{
+<a href=#1041 id=1041 data-nosnippet>1041</a>        <span class="kw">super</span>::<span class="kw-2">*</span>,
+<a href=#1042 id=1042 data-nosnippet>1042</a>        <span class="kw">crate</span>::{
+<a href=#1043 id=1043 data-nosnippet>1043</a>            feature_set,
+<a href=#1044 id=1044 data-nosnippet>1044</a>            hash::Hash,
+<a href=#1045 id=1045 data-nosnippet>1045</a>            keccak,
+<a href=#1046 id=1046 data-nosnippet>1046</a>            secp256k1_instruction::{
+<a href=#1047 id=1047 data-nosnippet>1047</a>                new_secp256k1_instruction, SecpSignatureOffsets, SIGNATURE_OFFSETS_SERIALIZED_SIZE,
+<a href=#1048 id=1048 data-nosnippet>1048</a>            },
+<a href=#1049 id=1049 data-nosnippet>1049</a>            signature::{Keypair, Signer},
+<a href=#1050 id=1050 data-nosnippet>1050</a>            transaction::Transaction,
+<a href=#1051 id=1051 data-nosnippet>1051</a>        },
+<a href=#1052 id=1052 data-nosnippet>1052</a>        rand0_7::{thread_rng, Rng},
+<a href=#1053 id=1053 data-nosnippet>1053</a>    };
+<a href=#1054 id=1054 data-nosnippet>1054</a>
+<a href=#1055 id=1055 data-nosnippet>1055</a>    <span class="kw">fn </span>test_case(
+<a href=#1056 id=1056 data-nosnippet>1056</a>        num_signatures: u8,
+<a href=#1057 id=1057 data-nosnippet>1057</a>        offsets: <span class="kw-2">&amp;</span>SecpSignatureOffsets,
+<a href=#1058 id=1058 data-nosnippet>1058</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), PrecompileError&gt; {
+<a href=#1059 id=1059 data-nosnippet>1059</a>        <span class="kw">let </span><span class="kw-2">mut </span>instruction_data = <span class="macro">vec!</span>[<span class="number">0u8</span>; DATA_START];
+<a href=#1060 id=1060 data-nosnippet>1060</a>        instruction_data[<span class="number">0</span>] = num_signatures;
+<a href=#1061 id=1061 data-nosnippet>1061</a>        <span class="kw">let </span>writer = std::io::Cursor::new(<span class="kw-2">&amp;mut </span>instruction_data[<span class="number">1</span>..]);
+<a href=#1062 id=1062 data-nosnippet>1062</a>        bincode::serialize_into(writer, <span class="kw-2">&amp;</span>offsets).unwrap();
+<a href=#1063 id=1063 data-nosnippet>1063</a>        <span class="kw">let </span>feature_set = FeatureSet::all_enabled();
+<a href=#1064 id=1064 data-nosnippet>1064</a>        verify(<span class="kw-2">&amp;</span>instruction_data, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[<span class="number">0u8</span>; <span class="number">100</span>]], <span class="kw-2">&amp;</span>feature_set)
+<a href=#1065 id=1065 data-nosnippet>1065</a>    }
+<a href=#1066 id=1066 data-nosnippet>1066</a>
+<a href=#1067 id=1067 data-nosnippet>1067</a>    <span class="attr">#[test]
+<a href=#1068 id=1068 data-nosnippet>1068</a>    </span><span class="kw">fn </span>test_invalid_offsets() {
+<a href=#1069 id=1069 data-nosnippet>1069</a>        solana_logger::setup();
+<a href=#1070 id=1070 data-nosnippet>1070</a>
+<a href=#1071 id=1071 data-nosnippet>1071</a>        <span class="kw">let </span><span class="kw-2">mut </span>instruction_data = <span class="macro">vec!</span>[<span class="number">0u8</span>; DATA_START];
+<a href=#1072 id=1072 data-nosnippet>1072</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets::default();
+<a href=#1073 id=1073 data-nosnippet>1073</a>        instruction_data[<span class="number">0</span>] = <span class="number">1</span>;
+<a href=#1074 id=1074 data-nosnippet>1074</a>        <span class="kw">let </span>writer = std::io::Cursor::new(<span class="kw-2">&amp;mut </span>instruction_data[<span class="number">1</span>..]);
+<a href=#1075 id=1075 data-nosnippet>1075</a>        bincode::serialize_into(writer, <span class="kw-2">&amp;</span>offsets).unwrap();
+<a href=#1076 id=1076 data-nosnippet>1076</a>        instruction_data.truncate(instruction_data.len() - <span class="number">1</span>);
+<a href=#1077 id=1077 data-nosnippet>1077</a>        <span class="kw">let </span>feature_set = FeatureSet::all_enabled();
+<a href=#1078 id=1078 data-nosnippet>1078</a>
+<a href=#1079 id=1079 data-nosnippet>1079</a>        <span class="macro">assert_eq!</span>(
+<a href=#1080 id=1080 data-nosnippet>1080</a>            verify(<span class="kw-2">&amp;</span>instruction_data, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[<span class="number">0u8</span>; <span class="number">100</span>]], <span class="kw-2">&amp;</span>feature_set),
+<a href=#1081 id=1081 data-nosnippet>1081</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidInstructionDataSize)
+<a href=#1082 id=1082 data-nosnippet>1082</a>        );
+<a href=#1083 id=1083 data-nosnippet>1083</a>
+<a href=#1084 id=1084 data-nosnippet>1084</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1085 id=1085 data-nosnippet>1085</a>            signature_instruction_index: <span class="number">1</span>,
+<a href=#1086 id=1086 data-nosnippet>1086</a>            ..SecpSignatureOffsets::default()
+<a href=#1087 id=1087 data-nosnippet>1087</a>        };
+<a href=#1088 id=1088 data-nosnippet>1088</a>        <span class="macro">assert_eq!</span>(
+<a href=#1089 id=1089 data-nosnippet>1089</a>            test_case(<span class="number">1</span>, <span class="kw-2">&amp;</span>offsets),
+<a href=#1090 id=1090 data-nosnippet>1090</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidInstructionDataSize)
+<a href=#1091 id=1091 data-nosnippet>1091</a>        );
+<a href=#1092 id=1092 data-nosnippet>1092</a>
+<a href=#1093 id=1093 data-nosnippet>1093</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1094 id=1094 data-nosnippet>1094</a>            message_instruction_index: <span class="number">1</span>,
+<a href=#1095 id=1095 data-nosnippet>1095</a>            ..SecpSignatureOffsets::default()
+<a href=#1096 id=1096 data-nosnippet>1096</a>        };
+<a href=#1097 id=1097 data-nosnippet>1097</a>        <span class="macro">assert_eq!</span>(
+<a href=#1098 id=1098 data-nosnippet>1098</a>            test_case(<span class="number">1</span>, <span class="kw-2">&amp;</span>offsets),
+<a href=#1099 id=1099 data-nosnippet>1099</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidDataOffsets)
+<a href=#1100 id=1100 data-nosnippet>1100</a>        );
+<a href=#1101 id=1101 data-nosnippet>1101</a>
+<a href=#1102 id=1102 data-nosnippet>1102</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1103 id=1103 data-nosnippet>1103</a>            eth_address_instruction_index: <span class="number">1</span>,
+<a href=#1104 id=1104 data-nosnippet>1104</a>            ..SecpSignatureOffsets::default()
+<a href=#1105 id=1105 data-nosnippet>1105</a>        };
+<a href=#1106 id=1106 data-nosnippet>1106</a>        <span class="macro">assert_eq!</span>(
+<a href=#1107 id=1107 data-nosnippet>1107</a>            test_case(<span class="number">1</span>, <span class="kw-2">&amp;</span>offsets),
+<a href=#1108 id=1108 data-nosnippet>1108</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidDataOffsets)
+<a href=#1109 id=1109 data-nosnippet>1109</a>        );
+<a href=#1110 id=1110 data-nosnippet>1110</a>    }
+<a href=#1111 id=1111 data-nosnippet>1111</a>
+<a href=#1112 id=1112 data-nosnippet>1112</a>    <span class="attr">#[test]
+<a href=#1113 id=1113 data-nosnippet>1113</a>    </span><span class="kw">fn </span>test_message_data_offsets() {
+<a href=#1114 id=1114 data-nosnippet>1114</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1115 id=1115 data-nosnippet>1115</a>            message_data_offset: <span class="number">99</span>,
+<a href=#1116 id=1116 data-nosnippet>1116</a>            message_data_size: <span class="number">1</span>,
+<a href=#1117 id=1117 data-nosnippet>1117</a>            ..SecpSignatureOffsets::default()
+<a href=#1118 id=1118 data-nosnippet>1118</a>        };
+<a href=#1119 id=1119 data-nosnippet>1119</a>        <span class="macro">assert_eq!</span>(
+<a href=#1120 id=1120 data-nosnippet>1120</a>            test_case(<span class="number">1</span>, <span class="kw-2">&amp;</span>offsets),
+<a href=#1121 id=1121 data-nosnippet>1121</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidSignature)
+<a href=#1122 id=1122 data-nosnippet>1122</a>        );
+<a href=#1123 id=1123 data-nosnippet>1123</a>
+<a href=#1124 id=1124 data-nosnippet>1124</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1125 id=1125 data-nosnippet>1125</a>            message_data_offset: <span class="number">100</span>,
+<a href=#1126 id=1126 data-nosnippet>1126</a>            message_data_size: <span class="number">1</span>,
+<a href=#1127 id=1127 data-nosnippet>1127</a>            ..SecpSignatureOffsets::default()
+<a href=#1128 id=1128 data-nosnippet>1128</a>        };
+<a href=#1129 id=1129 data-nosnippet>1129</a>        <span class="macro">assert_eq!</span>(
+<a href=#1130 id=1130 data-nosnippet>1130</a>            test_case(<span class="number">1</span>, <span class="kw-2">&amp;</span>offsets),
+<a href=#1131 id=1131 data-nosnippet>1131</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidSignature)
+<a href=#1132 id=1132 data-nosnippet>1132</a>        );
+<a href=#1133 id=1133 data-nosnippet>1133</a>
+<a href=#1134 id=1134 data-nosnippet>1134</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1135 id=1135 data-nosnippet>1135</a>            message_data_offset: <span class="number">100</span>,
+<a href=#1136 id=1136 data-nosnippet>1136</a>            message_data_size: <span class="number">1000</span>,
+<a href=#1137 id=1137 data-nosnippet>1137</a>            ..SecpSignatureOffsets::default()
+<a href=#1138 id=1138 data-nosnippet>1138</a>        };
+<a href=#1139 id=1139 data-nosnippet>1139</a>        <span class="macro">assert_eq!</span>(
+<a href=#1140 id=1140 data-nosnippet>1140</a>            test_case(<span class="number">1</span>, <span class="kw-2">&amp;</span>offsets),
+<a href=#1141 id=1141 data-nosnippet>1141</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidSignature)
+<a href=#1142 id=1142 data-nosnippet>1142</a>        );
+<a href=#1143 id=1143 data-nosnippet>1143</a>
+<a href=#1144 id=1144 data-nosnippet>1144</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1145 id=1145 data-nosnippet>1145</a>            message_data_offset: std::u16::MAX,
+<a href=#1146 id=1146 data-nosnippet>1146</a>            message_data_size: std::u16::MAX,
+<a href=#1147 id=1147 data-nosnippet>1147</a>            ..SecpSignatureOffsets::default()
+<a href=#1148 id=1148 data-nosnippet>1148</a>        };
+<a href=#1149 id=1149 data-nosnippet>1149</a>        <span class="macro">assert_eq!</span>(
+<a href=#1150 id=1150 data-nosnippet>1150</a>            test_case(<span class="number">1</span>, <span class="kw-2">&amp;</span>offsets),
+<a href=#1151 id=1151 data-nosnippet>1151</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidSignature)
+<a href=#1152 id=1152 data-nosnippet>1152</a>        );
+<a href=#1153 id=1153 data-nosnippet>1153</a>    }
+<a href=#1154 id=1154 data-nosnippet>1154</a>
+<a href=#1155 id=1155 data-nosnippet>1155</a>    <span class="attr">#[test]
+<a href=#1156 id=1156 data-nosnippet>1156</a>    </span><span class="kw">fn </span>test_eth_offset() {
+<a href=#1157 id=1157 data-nosnippet>1157</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1158 id=1158 data-nosnippet>1158</a>            eth_address_offset: std::u16::MAX,
+<a href=#1159 id=1159 data-nosnippet>1159</a>            ..SecpSignatureOffsets::default()
+<a href=#1160 id=1160 data-nosnippet>1160</a>        };
+<a href=#1161 id=1161 data-nosnippet>1161</a>        <span class="macro">assert_eq!</span>(
+<a href=#1162 id=1162 data-nosnippet>1162</a>            test_case(<span class="number">1</span>, <span class="kw-2">&amp;</span>offsets),
+<a href=#1163 id=1163 data-nosnippet>1163</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidSignature)
+<a href=#1164 id=1164 data-nosnippet>1164</a>        );
+<a href=#1165 id=1165 data-nosnippet>1165</a>
+<a href=#1166 id=1166 data-nosnippet>1166</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1167 id=1167 data-nosnippet>1167</a>            eth_address_offset: <span class="number">100 </span>- HASHED_PUBKEY_SERIALIZED_SIZE <span class="kw">as </span>u16 + <span class="number">1</span>,
+<a href=#1168 id=1168 data-nosnippet>1168</a>            ..SecpSignatureOffsets::default()
+<a href=#1169 id=1169 data-nosnippet>1169</a>        };
+<a href=#1170 id=1170 data-nosnippet>1170</a>        <span class="macro">assert_eq!</span>(
+<a href=#1171 id=1171 data-nosnippet>1171</a>            test_case(<span class="number">1</span>, <span class="kw-2">&amp;</span>offsets),
+<a href=#1172 id=1172 data-nosnippet>1172</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidSignature)
+<a href=#1173 id=1173 data-nosnippet>1173</a>        );
+<a href=#1174 id=1174 data-nosnippet>1174</a>    }
+<a href=#1175 id=1175 data-nosnippet>1175</a>
+<a href=#1176 id=1176 data-nosnippet>1176</a>    <span class="attr">#[test]
+<a href=#1177 id=1177 data-nosnippet>1177</a>    </span><span class="kw">fn </span>test_signature_offset() {
+<a href=#1178 id=1178 data-nosnippet>1178</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1179 id=1179 data-nosnippet>1179</a>            signature_offset: std::u16::MAX,
+<a href=#1180 id=1180 data-nosnippet>1180</a>            ..SecpSignatureOffsets::default()
+<a href=#1181 id=1181 data-nosnippet>1181</a>        };
+<a href=#1182 id=1182 data-nosnippet>1182</a>        <span class="macro">assert_eq!</span>(
+<a href=#1183 id=1183 data-nosnippet>1183</a>            test_case(<span class="number">1</span>, <span class="kw-2">&amp;</span>offsets),
+<a href=#1184 id=1184 data-nosnippet>1184</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidSignature)
+<a href=#1185 id=1185 data-nosnippet>1185</a>        );
+<a href=#1186 id=1186 data-nosnippet>1186</a>
+<a href=#1187 id=1187 data-nosnippet>1187</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1188 id=1188 data-nosnippet>1188</a>            signature_offset: <span class="number">100 </span>- SIGNATURE_SERIALIZED_SIZE <span class="kw">as </span>u16 + <span class="number">1</span>,
+<a href=#1189 id=1189 data-nosnippet>1189</a>            ..SecpSignatureOffsets::default()
+<a href=#1190 id=1190 data-nosnippet>1190</a>        };
+<a href=#1191 id=1191 data-nosnippet>1191</a>        <span class="macro">assert_eq!</span>(
+<a href=#1192 id=1192 data-nosnippet>1192</a>            test_case(<span class="number">1</span>, <span class="kw-2">&amp;</span>offsets),
+<a href=#1193 id=1193 data-nosnippet>1193</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidSignature)
+<a href=#1194 id=1194 data-nosnippet>1194</a>        );
+<a href=#1195 id=1195 data-nosnippet>1195</a>    }
+<a href=#1196 id=1196 data-nosnippet>1196</a>
+<a href=#1197 id=1197 data-nosnippet>1197</a>    <span class="attr">#[test]
+<a href=#1198 id=1198 data-nosnippet>1198</a>    </span><span class="kw">fn </span>test_count_is_zero_but_sig_data_exists() {
+<a href=#1199 id=1199 data-nosnippet>1199</a>        solana_logger::setup();
+<a href=#1200 id=1200 data-nosnippet>1200</a>
+<a href=#1201 id=1201 data-nosnippet>1201</a>        <span class="kw">let </span><span class="kw-2">mut </span>instruction_data = <span class="macro">vec!</span>[<span class="number">0u8</span>; DATA_START];
+<a href=#1202 id=1202 data-nosnippet>1202</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets::default();
+<a href=#1203 id=1203 data-nosnippet>1203</a>        instruction_data[<span class="number">0</span>] = <span class="number">0</span>;
+<a href=#1204 id=1204 data-nosnippet>1204</a>        <span class="kw">let </span>writer = std::io::Cursor::new(<span class="kw-2">&amp;mut </span>instruction_data[<span class="number">1</span>..]);
+<a href=#1205 id=1205 data-nosnippet>1205</a>        bincode::serialize_into(writer, <span class="kw-2">&amp;</span>offsets).unwrap();
+<a href=#1206 id=1206 data-nosnippet>1206</a>        <span class="kw">let </span>feature_set = FeatureSet::all_enabled();
+<a href=#1207 id=1207 data-nosnippet>1207</a>
+<a href=#1208 id=1208 data-nosnippet>1208</a>        <span class="macro">assert_eq!</span>(
+<a href=#1209 id=1209 data-nosnippet>1209</a>            verify(<span class="kw-2">&amp;</span>instruction_data, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[<span class="number">0u8</span>; <span class="number">100</span>]], <span class="kw-2">&amp;</span>feature_set),
+<a href=#1210 id=1210 data-nosnippet>1210</a>            <span class="prelude-val">Err</span>(PrecompileError::InvalidInstructionDataSize)
+<a href=#1211 id=1211 data-nosnippet>1211</a>        );
+<a href=#1212 id=1212 data-nosnippet>1212</a>    }
+<a href=#1213 id=1213 data-nosnippet>1213</a>
+<a href=#1214 id=1214 data-nosnippet>1214</a>    <span class="attr">#[test]
+<a href=#1215 id=1215 data-nosnippet>1215</a>    </span><span class="kw">fn </span>test_secp256k1() {
+<a href=#1216 id=1216 data-nosnippet>1216</a>        solana_logger::setup();
+<a href=#1217 id=1217 data-nosnippet>1217</a>        <span class="kw">let </span>offsets = SecpSignatureOffsets::default();
+<a href=#1218 id=1218 data-nosnippet>1218</a>        <span class="macro">assert_eq!</span>(
+<a href=#1219 id=1219 data-nosnippet>1219</a>            bincode::serialized_size(<span class="kw-2">&amp;</span>offsets).unwrap() <span class="kw">as </span>usize,
+<a href=#1220 id=1220 data-nosnippet>1220</a>            SIGNATURE_OFFSETS_SERIALIZED_SIZE
+<a href=#1221 id=1221 data-nosnippet>1221</a>        );
+<a href=#1222 id=1222 data-nosnippet>1222</a>
+<a href=#1223 id=1223 data-nosnippet>1223</a>        <span class="kw">let </span>secp_privkey = libsecp256k1::SecretKey::random(<span class="kw-2">&amp;mut </span>thread_rng());
+<a href=#1224 id=1224 data-nosnippet>1224</a>        <span class="kw">let </span>message_arr = <span class="string">b"hello"</span>;
+<a href=#1225 id=1225 data-nosnippet>1225</a>        <span class="kw">let </span><span class="kw-2">mut </span>secp_instruction = new_secp256k1_instruction(<span class="kw-2">&amp;</span>secp_privkey, message_arr);
+<a href=#1226 id=1226 data-nosnippet>1226</a>        <span class="kw">let </span>mint_keypair = Keypair::new();
+<a href=#1227 id=1227 data-nosnippet>1227</a>        <span class="kw">let </span>feature_set = feature_set::FeatureSet::all_enabled();
+<a href=#1228 id=1228 data-nosnippet>1228</a>
+<a href=#1229 id=1229 data-nosnippet>1229</a>        <span class="kw">let </span>tx = Transaction::new_signed_with_payer(
+<a href=#1230 id=1230 data-nosnippet>1230</a>            <span class="kw-2">&amp;</span>[secp_instruction.clone()],
+<a href=#1231 id=1231 data-nosnippet>1231</a>            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>mint_keypair.pubkey()),
+<a href=#1232 id=1232 data-nosnippet>1232</a>            <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>mint_keypair],
+<a href=#1233 id=1233 data-nosnippet>1233</a>            Hash::default(),
+<a href=#1234 id=1234 data-nosnippet>1234</a>        );
+<a href=#1235 id=1235 data-nosnippet>1235</a>
+<a href=#1236 id=1236 data-nosnippet>1236</a>        <span class="macro">assert!</span>(tx.verify_precompiles(<span class="kw-2">&amp;</span>feature_set).is_ok());
+<a href=#1237 id=1237 data-nosnippet>1237</a>
+<a href=#1238 id=1238 data-nosnippet>1238</a>        <span class="kw">let </span>index = thread_rng().gen_range(<span class="number">0</span>, secp_instruction.data.len());
+<a href=#1239 id=1239 data-nosnippet>1239</a>        secp_instruction.data[index] = secp_instruction.data[index].wrapping_add(<span class="number">12</span>);
+<a href=#1240 id=1240 data-nosnippet>1240</a>        <span class="kw">let </span>tx = Transaction::new_signed_with_payer(
+<a href=#1241 id=1241 data-nosnippet>1241</a>            <span class="kw-2">&amp;</span>[secp_instruction],
+<a href=#1242 id=1242 data-nosnippet>1242</a>            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>mint_keypair.pubkey()),
+<a href=#1243 id=1243 data-nosnippet>1243</a>            <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>mint_keypair],
+<a href=#1244 id=1244 data-nosnippet>1244</a>            Hash::default(),
+<a href=#1245 id=1245 data-nosnippet>1245</a>        );
+<a href=#1246 id=1246 data-nosnippet>1246</a>        <span class="macro">assert!</span>(tx.verify_precompiles(<span class="kw-2">&amp;</span>feature_set).is_err());
+<a href=#1247 id=1247 data-nosnippet>1247</a>    }
+<a href=#1248 id=1248 data-nosnippet>1248</a>
+<a href=#1249 id=1249 data-nosnippet>1249</a>    <span class="comment">// Signatures are malleable.
+<a href=#1250 id=1250 data-nosnippet>1250</a>    </span><span class="attr">#[test]
+<a href=#1251 id=1251 data-nosnippet>1251</a>    </span><span class="kw">fn </span>test_malleability() {
+<a href=#1252 id=1252 data-nosnippet>1252</a>        solana_logger::setup();
+<a href=#1253 id=1253 data-nosnippet>1253</a>
+<a href=#1254 id=1254 data-nosnippet>1254</a>        <span class="kw">let </span>secret_key = libsecp256k1::SecretKey::random(<span class="kw-2">&amp;mut </span>thread_rng());
+<a href=#1255 id=1255 data-nosnippet>1255</a>        <span class="kw">let </span>public_key = libsecp256k1::PublicKey::from_secret_key(<span class="kw-2">&amp;</span>secret_key);
+<a href=#1256 id=1256 data-nosnippet>1256</a>        <span class="kw">let </span>eth_address = construct_eth_pubkey(<span class="kw-2">&amp;</span>public_key);
+<a href=#1257 id=1257 data-nosnippet>1257</a>
+<a href=#1258 id=1258 data-nosnippet>1258</a>        <span class="kw">let </span>message = <span class="string">b"hello"</span>;
+<a href=#1259 id=1259 data-nosnippet>1259</a>        <span class="kw">let </span>message_hash = {
+<a href=#1260 id=1260 data-nosnippet>1260</a>            <span class="kw">let </span><span class="kw-2">mut </span>hasher = keccak::Hasher::default();
+<a href=#1261 id=1261 data-nosnippet>1261</a>            hasher.hash(message);
+<a href=#1262 id=1262 data-nosnippet>1262</a>            hasher.result()
+<a href=#1263 id=1263 data-nosnippet>1263</a>        };
+<a href=#1264 id=1264 data-nosnippet>1264</a>
+<a href=#1265 id=1265 data-nosnippet>1265</a>        <span class="kw">let </span>secp_message = libsecp256k1::Message::parse(<span class="kw-2">&amp;</span>message_hash.<span class="number">0</span>);
+<a href=#1266 id=1266 data-nosnippet>1266</a>        <span class="kw">let </span>(signature, recovery_id) = libsecp256k1::sign(<span class="kw-2">&amp;</span>secp_message, <span class="kw-2">&amp;</span>secret_key);
+<a href=#1267 id=1267 data-nosnippet>1267</a>
+<a href=#1268 id=1268 data-nosnippet>1268</a>        <span class="comment">// Flip the S value in the signature to make a different but valid signature.
+<a href=#1269 id=1269 data-nosnippet>1269</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>alt_signature = signature;
+<a href=#1270 id=1270 data-nosnippet>1270</a>        alt_signature.s = -alt_signature.s;
+<a href=#1271 id=1271 data-nosnippet>1271</a>        <span class="kw">let </span>alt_recovery_id = libsecp256k1::RecoveryId::parse(recovery_id.serialize() ^ <span class="number">1</span>).unwrap();
+<a href=#1272 id=1272 data-nosnippet>1272</a>
+<a href=#1273 id=1273 data-nosnippet>1273</a>        <span class="kw">let </span><span class="kw-2">mut </span>data: Vec&lt;u8&gt; = <span class="macro">vec!</span>[];
+<a href=#1274 id=1274 data-nosnippet>1274</a>        <span class="kw">let </span><span class="kw-2">mut </span>both_offsets = <span class="macro">vec!</span>[];
+<a href=#1275 id=1275 data-nosnippet>1275</a>
+<a href=#1276 id=1276 data-nosnippet>1276</a>        <span class="comment">// Verify both signatures of the same message.
+<a href=#1277 id=1277 data-nosnippet>1277</a>        </span><span class="kw">let </span>sigs = [(signature, recovery_id), (alt_signature, alt_recovery_id)];
+<a href=#1278 id=1278 data-nosnippet>1278</a>        <span class="kw">for </span>(signature, recovery_id) <span class="kw">in </span>sigs.iter() {
+<a href=#1279 id=1279 data-nosnippet>1279</a>            <span class="kw">let </span>signature_offset = data.len();
+<a href=#1280 id=1280 data-nosnippet>1280</a>            data.extend(signature.serialize());
+<a href=#1281 id=1281 data-nosnippet>1281</a>            data.push(recovery_id.serialize());
+<a href=#1282 id=1282 data-nosnippet>1282</a>            <span class="kw">let </span>eth_address_offset = data.len();
+<a href=#1283 id=1283 data-nosnippet>1283</a>            data.extend(eth_address);
+<a href=#1284 id=1284 data-nosnippet>1284</a>            <span class="kw">let </span>message_data_offset = data.len();
+<a href=#1285 id=1285 data-nosnippet>1285</a>            data.extend(message);
+<a href=#1286 id=1286 data-nosnippet>1286</a>
+<a href=#1287 id=1287 data-nosnippet>1287</a>            <span class="kw">let </span>data_start = <span class="number">1 </span>+ SIGNATURE_OFFSETS_SERIALIZED_SIZE * <span class="number">2</span>;
+<a href=#1288 id=1288 data-nosnippet>1288</a>
+<a href=#1289 id=1289 data-nosnippet>1289</a>            <span class="kw">let </span>offsets = SecpSignatureOffsets {
+<a href=#1290 id=1290 data-nosnippet>1290</a>                signature_offset: (signature_offset + data_start) <span class="kw">as </span>u16,
+<a href=#1291 id=1291 data-nosnippet>1291</a>                signature_instruction_index: <span class="number">0</span>,
+<a href=#1292 id=1292 data-nosnippet>1292</a>                eth_address_offset: (eth_address_offset + data_start) <span class="kw">as </span>u16,
+<a href=#1293 id=1293 data-nosnippet>1293</a>                eth_address_instruction_index: <span class="number">0</span>,
+<a href=#1294 id=1294 data-nosnippet>1294</a>                message_data_offset: (message_data_offset + data_start) <span class="kw">as </span>u16,
+<a href=#1295 id=1295 data-nosnippet>1295</a>                message_data_size: message.len() <span class="kw">as </span>u16,
+<a href=#1296 id=1296 data-nosnippet>1296</a>                message_instruction_index: <span class="number">0</span>,
+<a href=#1297 id=1297 data-nosnippet>1297</a>            };
+<a href=#1298 id=1298 data-nosnippet>1298</a>
+<a href=#1299 id=1299 data-nosnippet>1299</a>            both_offsets.push(offsets);
+<a href=#1300 id=1300 data-nosnippet>1300</a>        }
+<a href=#1301 id=1301 data-nosnippet>1301</a>
+<a href=#1302 id=1302 data-nosnippet>1302</a>        <span class="kw">let </span><span class="kw-2">mut </span>instruction_data: Vec&lt;u8&gt; = <span class="macro">vec!</span>[<span class="number">2</span>];
+<a href=#1303 id=1303 data-nosnippet>1303</a>
+<a href=#1304 id=1304 data-nosnippet>1304</a>        <span class="kw">for </span>offsets <span class="kw">in </span>both_offsets {
+<a href=#1305 id=1305 data-nosnippet>1305</a>            <span class="kw">let </span>offsets = bincode::serialize(<span class="kw-2">&amp;</span>offsets).unwrap();
+<a href=#1306 id=1306 data-nosnippet>1306</a>            instruction_data.extend(offsets);
+<a href=#1307 id=1307 data-nosnippet>1307</a>        }
+<a href=#1308 id=1308 data-nosnippet>1308</a>
+<a href=#1309 id=1309 data-nosnippet>1309</a>        instruction_data.extend(data);
+<a href=#1310 id=1310 data-nosnippet>1310</a>
+<a href=#1311 id=1311 data-nosnippet>1311</a>        verify(
+<a href=#1312 id=1312 data-nosnippet>1312</a>            <span class="kw-2">&amp;</span>instruction_data,
+<a href=#1313 id=1313 data-nosnippet>1313</a>            <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>instruction_data],
+<a href=#1314 id=1314 data-nosnippet>1314</a>            <span class="kw-2">&amp;</span>FeatureSet::all_enabled(),
+<a href=#1315 id=1315 data-nosnippet>1315</a>        )
+<a href=#1316 id=1316 data-nosnippet>1316</a>        .unwrap();
+<a href=#1317 id=1317 data-nosnippet>1317</a>    }
+<a href=#1318 id=1318 data-nosnippet>1318</a>}</code></pre></div></section></main></body></html>

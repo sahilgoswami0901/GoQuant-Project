@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CommitmentLevel","ParseCommitmentLevelError"],"struct":["CommitmentConfig"]};

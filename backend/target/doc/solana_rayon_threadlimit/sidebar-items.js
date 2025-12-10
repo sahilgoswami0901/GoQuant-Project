@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_max_thread_count","get_thread_count"]};

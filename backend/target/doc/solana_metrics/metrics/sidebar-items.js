@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MetricsError"],"fn":["flush","metrics_config_sanity_check","query","serialize_points","set_host_id","set_panic_hook","submit"],"mod":["test_mocks"],"struct":["MetricsAgent"],"trait":["MetricsWriter"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ALPHA","FULL_ROUNDS","PARTIAL_ROUNDS"],"fn":["get_poseidon_parameters"]};

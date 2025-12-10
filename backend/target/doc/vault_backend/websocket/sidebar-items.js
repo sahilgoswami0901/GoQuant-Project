@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["WsEventType"],"fn":["broadcast","configure_routes","send_to_user","websocket_handler"],"struct":["BalanceUpdateData","CollateralLockedData","CollateralUnlockedData","TransactionConfirmedData","WsMessage","WsRegistry"]};

@@ -1,0 +1,90 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="An extension trait to `std::io::Read` streams; mainly targeted at reading primitive types with a known size."><title>IOread in scroll - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../scroll/index.html">scroll</a><span class="version">0.11.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">IOread</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul><h3><a href="#provided-methods">Provided Methods</a></h3><ul class="block"><li><a href="#method.ioread" title="ioread">ioread</a></li><li><a href="#method.ioread_with" title="ioread_with">ioread_with</a></li></ul><h3><a href="#dyn-compatibility">Dyn Compatibility</a></h3><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate scroll</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">scroll</a></div><h1>Trait <span class="trait">IOread</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/scroll/lesser.rs.html#57-111">Source</a> </span></div><pre class="rust item-decl"><code>pub trait IOread&lt;Ctx: <a class="trait" href="https://doc.rust-lang.org/1.89.0/core/marker/trait.Copy.html" title="trait core::marker::Copy">Copy</a>&gt;: <a class="trait" href="https://doc.rust-lang.org/1.89.0/std/io/trait.Read.html" title="trait std::io::Read">Read</a> {
+    // Provided methods
+    fn <a href="#method.ioread" class="fn">ioread</a>&lt;N: <a class="trait" href="ctx/trait.FromCtx.html" title="trait scroll::ctx::FromCtx">FromCtx</a>&lt;Ctx&gt; + <a class="trait" href="ctx/trait.SizeWith.html" title="trait scroll::ctx::SizeWith">SizeWith</a>&lt;Ctx&gt;&gt;(&amp;mut self) -&gt; <a class="type" href="https://doc.rust-lang.org/1.89.0/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;N&gt;
+       <span class="where">where Ctx: <a class="trait" href="https://doc.rust-lang.org/1.89.0/core/default/trait.Default.html" title="trait core::default::Default">Default</a></span> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.ioread_with" class="fn">ioread_with</a>&lt;N: <a class="trait" href="ctx/trait.FromCtx.html" title="trait scroll::ctx::FromCtx">FromCtx</a>&lt;Ctx&gt; + <a class="trait" href="ctx/trait.SizeWith.html" title="trait scroll::ctx::SizeWith">SizeWith</a>&lt;Ctx&gt;&gt;(
+        &amp;mut self,
+        ctx: Ctx,
+    ) -&gt; <a class="type" href="https://doc.rust-lang.org/1.89.0/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;N&gt; { ... }
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>An extension trait to <code>std::io::Read</code> streams; mainly targeted at reading primitive types with
+a known size.</p>
+<p>Requires types to implement <a href="ctx/trait.FromCtx.html"><code>FromCtx</code></a> and <a href="ctx/trait.SizeWith.html"><code>SizeWith</code></a>.</p>
+<p><strong>NB</strong> You should probably add <code>repr(C)</code> and be very careful how you implement
+<a href="ctx/trait.SizeWith.html"><code>SizeWith</code></a>, otherwise you will get IO errors failing to fill entire
+buffer (the size you specified in <code>SizeWith</code>), or out of bound errors (depending on your impl)
+in <code>from_ctx</code>.</p>
+<p>Warning: Currently ioread/write uses a small 256-byte buffer and can not read/write larger types</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::io::Cursor;
+<span class="kw">use </span>scroll::{<span class="self">self</span>, ctx, LE, Pread, IOread};
+
+<span class="attr">#[repr(packed)]
+</span><span class="kw">struct </span>Foo {
+    foo: i64,
+    bar: u32,
+}
+
+<span class="kw">impl </span>ctx::FromCtx&lt;scroll::Endian&gt; <span class="kw">for </span>Foo {
+    <span class="kw">fn </span>from_ctx(bytes: <span class="kw-2">&amp;</span>[u8], ctx: scroll::Endian) -&gt; <span class="self">Self </span>{
+        Foo { foo: bytes.pread_with::&lt;i64&gt;(<span class="number">0</span>, ctx).unwrap(), bar: bytes.pread_with::&lt;u32&gt;(<span class="number">8</span>, ctx).unwrap() }
+    }
+}
+
+<span class="kw">impl </span>ctx::SizeWith&lt;scroll::Endian&gt; <span class="kw">for </span>Foo {
+    <span class="comment">// our parsing context doesn't influence our size
+    </span><span class="kw">fn </span>size_with(<span class="kw">_</span>: <span class="kw-2">&amp;</span>scroll::Endian) -&gt; usize {
+        ::std::mem::size_of::&lt;Foo&gt;()
+    }
+}
+
+<span class="kw">let </span>bytes_ = [<span class="number">0x0b</span>,<span class="number">0x0b</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>, <span class="number">0xef</span>,<span class="number">0xbe</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,];
+<span class="kw">let </span><span class="kw-2">mut </span>bytes = Cursor::new(bytes_);
+<span class="kw">let </span>foo = bytes.ioread_with::&lt;i64&gt;(LE).unwrap();
+<span class="kw">let </span>bar = bytes.ioread_with::&lt;u32&gt;(LE).unwrap();
+<span class="macro">assert_eq!</span>(foo, <span class="number">0xb0b</span>);
+<span class="macro">assert_eq!</span>(bar, <span class="number">0xbeef</span>);
+<span class="kw">let </span>error = bytes.ioread_with::&lt;f64&gt;(LE);
+<span class="macro">assert!</span>(error.is_err());
+<span class="kw">let </span><span class="kw-2">mut </span>bytes = Cursor::new(bytes_);
+<span class="kw">let </span>foo_ = bytes.ioread_with::&lt;Foo&gt;(LE).unwrap();
+<span class="comment">// Remember that you need to copy out fields from packed structs
+// with a `{}` block instead of borrowing them directly
+// ref: https://github.com/rust-lang/rust/issues/46043
+</span><span class="macro">assert_eq!</span>({foo_.foo}, foo);
+<span class="macro">assert_eq!</span>({foo_.bar}, bar);</code></pre></div>
+</div></details><h2 id="provided-methods" class="section-header">Provided Methods<a href="#provided-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="method.ioread" class="method"><a class="src rightside" href="../src/scroll/lesser.rs.html#75-81">Source</a><h4 class="code-header">fn <a href="#method.ioread" class="fn">ioread</a>&lt;N: <a class="trait" href="ctx/trait.FromCtx.html" title="trait scroll::ctx::FromCtx">FromCtx</a>&lt;Ctx&gt; + <a class="trait" href="ctx/trait.SizeWith.html" title="trait scroll::ctx::SizeWith">SizeWith</a>&lt;Ctx&gt;&gt;(&amp;mut self) -&gt; <a class="type" href="https://doc.rust-lang.org/1.89.0/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;N&gt;<div class="where">where
+    Ctx: <a class="trait" href="https://doc.rust-lang.org/1.89.0/core/default/trait.Default.html" title="trait core::default::Default">Default</a>,</div></h4></section></summary><div class="docblock"><p>Reads the type <code>N</code> from <code>Self</code>, with a default parsing context.
+For the primitive numeric types, this will be at the host machine’s endianness.</p>
+<h5 id="example-1"><a class="doc-anchor" href="#example-1">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>scroll::IOread;
+<span class="kw">use </span>std::io::Cursor;
+<span class="kw">let </span>bytes = [<span class="number">0xef</span>, <span class="number">0xbe</span>];
+<span class="kw">let </span><span class="kw-2">mut </span>bytes = Cursor::new(<span class="kw-2">&amp;</span>bytes[..]);
+<span class="kw">let </span>beef = bytes.ioread::&lt;u16&gt;().unwrap();
+
+<span class="attr">#[cfg(target_endian = <span class="string">"little"</span>)]
+</span><span class="macro">assert_eq!</span>(<span class="number">0xbeef</span>, beef);
+<span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
+</span><span class="macro">assert_eq!</span>(<span class="number">0xefbe</span>, beef);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.ioread_with" class="method"><a class="src rightside" href="../src/scroll/lesser.rs.html#104-110">Source</a><h4 class="code-header">fn <a href="#method.ioread_with" class="fn">ioread_with</a>&lt;N: <a class="trait" href="ctx/trait.FromCtx.html" title="trait scroll::ctx::FromCtx">FromCtx</a>&lt;Ctx&gt; + <a class="trait" href="ctx/trait.SizeWith.html" title="trait scroll::ctx::SizeWith">SizeWith</a>&lt;Ctx&gt;&gt;(
+    &amp;mut self,
+    ctx: Ctx,
+) -&gt; <a class="type" href="https://doc.rust-lang.org/1.89.0/std/io/error/type.Result.html" title="type std::io::error::Result">Result</a>&lt;N&gt;</h4></section></summary><div class="docblock"><p>Reads the type <code>N</code> from <code>Self</code>, with the parsing context <code>ctx</code>.
+<strong>NB</strong>: this will panic if the type you’re reading has a size greater than 256. Plans are to have this allocate in larger cases.</p>
+<p>For the primitive numeric types, this will be at the host machine’s endianness.</p>
+<h5 id="example-2"><a class="doc-anchor" href="#example-2">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>scroll::{IOread, LE, BE};
+<span class="kw">use </span>std::io::Cursor;
+<span class="kw">let </span>bytes = [<span class="number">0xef</span>, <span class="number">0xbe</span>, <span class="number">0xb0</span>, <span class="number">0xb0</span>, <span class="number">0xfe</span>, <span class="number">0xed</span>, <span class="number">0xde</span>, <span class="number">0xad</span>];
+<span class="kw">let </span><span class="kw-2">mut </span>bytes = Cursor::new(<span class="kw-2">&amp;</span>bytes[..]);
+<span class="kw">let </span>beef = bytes.ioread_with::&lt;u16&gt;(LE).unwrap();
+<span class="macro">assert_eq!</span>(<span class="number">0xbeef</span>, beef);
+<span class="kw">let </span>b0 = bytes.ioread::&lt;u8&gt;().unwrap();
+<span class="macro">assert_eq!</span>(<span class="number">0xb0</span>, b0);
+<span class="kw">let </span>b0 = bytes.ioread::&lt;u8&gt;().unwrap();
+<span class="macro">assert_eq!</span>(<span class="number">0xb0</span>, b0);
+<span class="kw">let </span>feeddead = bytes.ioread_with::&lt;u32&gt;(BE).unwrap();
+<span class="macro">assert_eq!</span>(<span class="number">0xfeeddead</span>, feeddead);</code></pre></div>
+</div></details></div><h2 id="dyn-compatibility" class="section-header">Dyn Compatibility<a href="#dyn-compatibility" class="anchor">§</a></h2><div class="dyn-compatibility-info"><p>This trait is <b>not</b> <a href="https://doc.rust-lang.org/1.89.0/reference/items/traits.html#dyn-compatibility">dyn compatible</a>.</p><p><i>In older versions of Rust, dyn compatibility was called "object safety", so this trait is not object safe.</i></p></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"><section id="impl-IOread%3CCtx%3E-for-R" class="impl"><a class="src rightside" href="../src/scroll/lesser.rs.html#115">Source</a><a href="#impl-IOread%3CCtx%3E-for-R" class="anchor">§</a><h3 class="code-header">impl&lt;Ctx: <a class="trait" href="https://doc.rust-lang.org/1.89.0/core/marker/trait.Copy.html" title="trait core::marker::Copy">Copy</a>, R: <a class="trait" href="https://doc.rust-lang.org/1.89.0/std/io/trait.Read.html" title="trait std::io::Read">Read</a> + ?<a class="trait" href="https://doc.rust-lang.org/1.89.0/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>&gt; <a class="trait" href="trait.IOread.html" title="trait scroll::IOread">IOread</a>&lt;Ctx&gt; for R</h3><div class="docblock"><p>Types that implement <code>Read</code> get methods defined in <code>IOread</code>
+for free.</p>
+</div></section></div><script src="../trait.impl/scroll/lesser/trait.IOread.js" async></script></section></div></main></body></html>

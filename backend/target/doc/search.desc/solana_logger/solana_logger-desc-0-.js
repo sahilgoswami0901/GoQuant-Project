@@ -1,0 +1,1 @@
+searchState.loadedDescShard("solana_logger", 0, "The <code>logger</code> module configures <code>env_logger</code>")

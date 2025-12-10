@@ -1,0 +1,118 @@
+// Collateral Vault Database Schema
+// Copy and paste this entire content into https://dbdiagram.io/d
+
+Table vaults {
+  owner varchar(64) [pk, note: 'User wallet public key (base58), Primary Key']
+  vault_address varchar(64) [not null, note: 'Vault PDA address on Solana']
+  token_account varchar(64) [not null, note: 'Associated token account for USDT']
+  total_balance bigint [not null, default: 0, note: 'Total USDT balance in smallest units (6 decimals)']
+  locked_balance bigint [not null, default: 0, note: 'Balance locked for trading positions']
+  available_balance bigint [not null, default: 0, note: 'Balance available for withdrawal']
+  total_deposited bigint [not null, default: 0, note: 'Lifetime total deposits']
+  total_withdrawn bigint [not null, default: 0, note: 'Lifetime total withdrawals']
+  created_at timestamptz [not null, default: `NOW()`, note: 'When vault was created on-chain']
+  updated_at timestamptz [not null, default: `NOW()`, note: 'Last database update timestamp']
+  status varchar(20) [not null, default: 'active', note: 'Vault status: active, paused, closed']
+  
+  indexes {
+    status [name: 'idx_vaults_status']
+    updated_at [name: 'idx_vaults_updated_at']
+  }
+  
+  Note: 'Primary table storing cached vault data from blockchain. All balances in smallest units (1 USDT = 1,000,000).'
+}
+
+Table transactions {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Unique transaction ID']
+  vault_owner varchar(64) [ref: > vaults.owner, not null, note: 'Foreign key to vaults table']
+  transaction_type varchar(20) [not null, note: 'Type: deposit, withdrawal, lock, unlock, transfer_in, transfer_out, fee']
+  amount bigint [not null, note: 'Transaction amount in smallest units']
+  signature varchar(128) [note: 'Solana transaction signature (base58), NULL if pending']
+  status varchar(20) [not null, default: 'pending', note: 'Status: pending, confirmed, failed']
+  balance_before bigint [not null, note: 'Vault balance before this transaction']
+  balance_after bigint [not null, note: 'Vault balance after this transaction']
+  counterparty varchar(64) [note: 'For transfers: other party vault owner']
+  note text [note: 'Optional note or reason for transaction']
+  created_at timestamptz [not null, default: `NOW()`, note: 'When transaction was initiated']
+  updated_at timestamptz [not null, default: `NOW()`, note: 'Last update timestamp']
+  confirmed_at timestamptz [note: 'When transaction was confirmed on-chain, NULL if pending/failed']
+  
+  indexes {
+    vault_owner [name: 'idx_transactions_vault_owner']
+    transaction_type [name: 'idx_transactions_type']
+    status [name: 'idx_transactions_status']
+    created_at [name: 'idx_transactions_created_at']
+    signature [name: 'idx_transactions_signature']
+  }
+  
+  Note: 'Records every vault operation for auditing and history. Every deposit, withdrawal, lock, unlock, and transfer creates a record here.'
+}
+
+Table balance_snapshots {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Unique snapshot ID']
+  vault_owner varchar(64) [ref: > vaults.owner, not null, note: 'Foreign key to vaults table']
+  total_balance bigint [not null, note: 'Total balance at snapshot time']
+  locked_balance bigint [not null, note: 'Locked balance at snapshot time']
+  available_balance bigint [not null, note: 'Available balance at snapshot time']
+  timestamp timestamptz [not null, default: `NOW()`, note: 'When snapshot was taken']
+  snapshot_type varchar(20) [not null, default: 'periodic', note: 'Type: periodic, event, daily_summary']
+  
+  indexes {
+    (vault_owner, timestamp) [name: 'idx_snapshots_vault_time']
+    timestamp [name: 'idx_snapshots_timestamp']
+  }
+  
+  Note: 'Periodic recordings of vault balances for analytics. Snapshots are taken at regular intervals and on significant events.'
+}
+
+Table reconciliation_logs {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Unique log ID']
+  vault_owner varchar(64) [ref: - vaults.owner, note: 'Foreign key to vaults (NULL for system-wide reconciliation)']
+  expected_balance bigint [not null, note: 'Balance we expected from database']
+  actual_balance bigint [not null, note: 'Balance found on-chain']
+  difference bigint [not null, note: 'Difference (actual - expected)']
+  auto_fixed boolean [not null, default: false, note: 'Whether discrepancy was auto-fixed']
+  notes text [note: 'Notes about the reconciliation']
+  created_at timestamptz [not null, default: `NOW()`, note: 'When reconciliation was performed']
+  
+  indexes {
+    difference [name: 'idx_reconciliation_difference']
+    vault_owner [name: 'idx_reconciliation_vault']
+  }
+  
+  Note: 'Records of balance reconciliation between on-chain and database. Used for auditing and detecting discrepancies.'
+}
+
+Table tvl_snapshots {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Unique snapshot ID']
+  total_value_locked bigint [not null, note: 'Total USDT across all vaults']
+  active_vaults bigint [not null, note: 'Number of active vaults']
+  total_locked bigint [not null, note: 'Total locked for positions']
+  total_available bigint [not null, note: 'Total available for withdrawal']
+  timestamp timestamptz [not null, default: `NOW()`, note: 'When snapshot was taken']
+  
+  indexes {
+    timestamp [name: 'idx_tvl_timestamp']
+  }
+  
+  Note: 'Total Value Locked snapshots for protocol analytics. System-wide metrics across all vaults.'
+}
+
+Table alerts {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Unique alert ID']
+  severity varchar(20) [not null, note: 'Severity: info, warning, critical']
+  alert_type varchar(50) [not null, note: 'Type: low_balance, large_tx, failed_tx, etc.']
+  vault_owner varchar(64) [ref: - vaults.owner, note: 'Related vault owner (NULL for system alerts)']
+  message text [not null, note: 'Human-readable alert message']
+  data jsonb [note: 'Additional data as JSON']
+  acknowledged boolean [not null, default: false, note: 'Whether alert has been acknowledged']
+  created_at timestamptz [not null, default: `NOW()`, note: 'When alert was created']
+  acknowledged_at timestamptz [note: 'When alert was acknowledged']
+  
+  indexes {
+    (acknowledged, created_at) [name: 'idx_alerts_unacknowledged']
+    (severity, created_at) [name: 'idx_alerts_severity']
+  }
+  
+  Note: 'System alerts for monitoring and notifications. Can be vault-specific or system-wide.'
+}

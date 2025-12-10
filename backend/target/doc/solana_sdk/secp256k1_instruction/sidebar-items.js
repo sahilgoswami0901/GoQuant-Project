@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DATA_START","HASHED_PUBKEY_SERIALIZED_SIZE","SIGNATURE_OFFSETS_SERIALIZED_SIZE","SIGNATURE_SERIALIZED_SIZE"],"fn":["construct_eth_pubkey","new_secp256k1_instruction","verify"],"struct":["SecpSignatureOffsets"]};

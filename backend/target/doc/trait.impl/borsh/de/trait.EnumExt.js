@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["borsh",[]],["solana_sdk",[["impl <a class=\"trait\" href=\"borsh/de/trait.EnumExt.html\" title=\"trait borsh::de::EnumExt\">EnumExt</a> for <a class=\"enum\" href=\"solana_sdk/compute_budget/enum.ComputeBudgetInstruction.html\" title=\"enum solana_sdk::compute_budget::ComputeBudgetInstruction\">ComputeBudgetInstruction</a>"]]],["spl_associated_token_account",[["impl <a class=\"trait\" href=\"borsh/de/trait.EnumExt.html\" title=\"trait borsh::de::EnumExt\">EnumExt</a> for <a class=\"enum\" href=\"spl_associated_token_account/instruction/enum.AssociatedTokenAccountInstruction.html\" title=\"enum spl_associated_token_account::instruction::AssociatedTokenAccountInstruction\">AssociatedTokenAccountInstruction</a>"]]],["spl_token_metadata_interface",[["impl <a class=\"trait\" href=\"borsh/de/trait.EnumExt.html\" title=\"trait borsh::de::EnumExt\">EnumExt</a> for <a class=\"enum\" href=\"spl_token_metadata_interface/state/enum.Field.html\" title=\"enum spl_token_metadata_interface::state::Field\">Field</a><div class=\"where\">where\n    <a class=\"struct\" href=\"https://doc.rust-lang.org/1.89.0/alloc/string/struct.String.html\" title=\"struct alloc::string::String\">String</a>: <a class=\"trait\" href=\"borsh/de/trait.BorshDeserialize.html\" title=\"trait borsh::de::BorshDeserialize\">BorshDeserialize</a>,</div>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[12,318,393,610]}

@@ -1,0 +1,1 @@
+searchState.loadedDescShard("solana_frozen_abi", 0, "")

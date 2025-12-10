@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["mock_process_instruction"],"struct":["AllocErr","BpfAllocator","InvokeContext","SerializedAccountMetadata","SyscallContext"],"type":["BuiltinFunctionWithContext"]};

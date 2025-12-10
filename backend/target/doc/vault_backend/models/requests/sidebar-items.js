@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["default_limit"],"struct":["BalanceHistoryQuery","DepositRequest","InitializeVaultRequest","LockCollateralRequest","MintUsdtRequest","TransactionQuery","TransferCollateralRequest","UnlockCollateralRequest","WithdrawRequest"]};

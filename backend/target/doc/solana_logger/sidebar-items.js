@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_FILTER"],"fn":["setup","setup_file_with_default","setup_with","setup_with_default","setup_with_default_filter"]};

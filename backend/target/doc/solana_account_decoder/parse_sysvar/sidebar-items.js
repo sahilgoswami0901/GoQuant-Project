@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SysvarAccountType"],"fn":["parse_sysvar"],"struct":["UiClock","UiFees","UiLastRestartSlot","UiRecentBlockhashesEntry","UiRent","UiRewards","UiSlotHashEntry","UiSlotHistory","UiStakeHistoryEntry"]};

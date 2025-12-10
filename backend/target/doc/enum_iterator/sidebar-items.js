@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"derive":["Sequence"],"fn":["all","cardinality","first","last","next","next_cycle","previous","previous_cycle","reverse_all"],"struct":["All","ReverseAll"],"trait":["Sequence"]};

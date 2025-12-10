@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ID","MAX_LONG_FIELD_LENGTH","MAX_SHORT_FIELD_LENGTH","MAX_VALIDATOR_INFO"],"fn":["check_id","id"],"struct":["ValidatorInfo"]};

@@ -1,0 +1,234 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Emulates eager expansion of macros."><title>eager in eager - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="eager" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../eager/index.html">eager</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">eager</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li><li><a href="#usage" title="Usage">Usage</a></li><li><a href="#cons" title="Cons">Cons</a></li><li><a href="#macro-expansions" title="Macro expansions">Macro expansions</a><ul><li><a href="#the-arguments-to-a-macro-usually-cannot-be-the-resulting-expansion-of-another-macro-call" title="The arguments to a macro usually cannot be the resulting expansion of another macro call:">The arguments to a macro usually cannot be the resulting expansion of another macro call:</a></li><li><a href="#macros-are-illegal-in-some-contexts-eg-as-an-identifier" title="Macros are illegal in some contexts (e.g. as an identifier)">Macros are illegal in some contexts (e.g. as an identifier)</a></li><li><a href="#no-intermediate-expansion-step-can-include-invalid-syntax" title="No intermediate expansion step can include invalid syntax">No intermediate expansion step can include invalid syntax</a></li></ul></li><li><a href="#conventions" title="Conventions">Conventions</a><ul><li><a href="#documentation" title="Documentation">Documentation</a></li><li><a href="#auxiliary-variable" title="Auxiliary variable">Auxiliary variable</a></li></ul></li><li><a href="#trivia" title="Trivia">Trivia</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate eager</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">eager</a></div><h1>Macro <span class="macro">eager</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/eager/eager.rs.html#273-284">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! eager {
+    (
+		$($all:tt)*
+	) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Emulates eager expansion of macros.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[macro_use]
+</span><span class="kw">extern crate </span>eager;
+
+<span class="comment">//Declare an eager macro
+</span><span class="macro">eager_macro_rules!</span>{ <span class="macro-nonterminal">$eager_1
+    </span><span class="macro">macro_rules!</span> plus_1{
+        ()=&gt;{+ <span class="number">1</span>};
+    }
+}
+
+<span class="kw">fn </span>main(){
+	<span class="comment">// Use the macro inside an eager! call to expand it eagerly
+	</span><span class="macro">assert_eq!</span>(<span class="number">4</span>, <span class="macro">eager!</span>{<span class="number">2 </span><span class="macro">plus_1!</span>() <span class="macro">plus_1!</span>()});
+}</code></pre></div>
+<h2 id="usage"><a class="doc-anchor" href="#usage">§</a>Usage</h2>
+<p><code>eager!</code> can wrap any code, and if that code contains a macro call, that macro will be
+expanded before its consumer. This means:</p>
+<ul>
+<li>If a macro call is given as an argument to another macro, the first macro will be expanded
+first.</li>
+<li>All macros will be fully expanded before <code>eager!</code> expands. Therefore, otherwise illegal
+intermediate expansion steps are possible.</li>
+</ul>
+<p><code>eager!</code> does not work with any macro; only macros declared using <a href="macro.eager_macro_rules.html"><code>eager_macro_rules!</code></a> may be
+used. Such macros are said to be <code>eager!</code>-enabled.</p>
+<p>To enable the use of non-<code>eager!</code>-enabled macros inside an <code>eager!</code> call,
+a <code>lazy!</code> block can be inserted. Everything inside the <code>lazy!</code> block will be lazily expanded,
+while everything outside it will continue to be eagerly expanded. Since, <code>lazy!</code> reverts
+to the usual rules for macro expansion, an <code>eager!</code> block can be inserted inside the <code>lazy!</code>
+block, to re-enable eager expansion for some subset of it.</p>
+<h2 id="cons"><a class="doc-anchor" href="#cons">§</a>Cons</h2>
+<ul>
+<li>
+<p>Because of the way <code>eager!</code> is implemented - being a hack of recursive macros - the compiler’s
+default macro recursion limit is quickly exceeded. Therefore, <code>#![recursion_limit="256"]</code>
+must be used in most situations - potentially with a higher limit -
+such that expansion can happen.</p>
+</li>
+<li>
+<p>Debugging an eagerly expanded macro is very difficult and requires intimate knowledge
+of the implementation of <code>eager!</code>. There is no way to mitigate this, except to try and
+recreate the bug without using <code>eager!</code>. Likewise, the error messages the compiler will
+emit are exponentially more cryptic than they already would have been.</p>
+</li>
+<li>
+<p>Only <code>eager!</code>-enabled macros can be eagerly expanded, so existing macros do not gain much.
+The <code>lazy!</code> block alleviates this a bit, by allowing the use of existing macros in it,
+while eager expansion can be done around them.
+Luckily, <code>eager!</code>-enabling an existing macro should not be too much
+trouble using <a href="macro.eager_macro_rules.html"><code>eager_macro_rules!</code></a>.</p>
+</li>
+</ul>
+<hr />
+<h2 id="macro-expansions"><a class="doc-anchor" href="#macro-expansions">§</a>Macro expansions</h2>
+<p>Rust is lazy when it comes to macro expansion. When the compiler sees a macro call, it will
+try to expand the macro without looking at its arguments or what the expansion becomes.
+Using <code>eager!</code>, previously illegal macro expansions can be made possible.</p>
+<p>The following is a non-exhaustive list of illegal macro patterns that can be used with <code>eager!</code>.</p>
+<h4 id="the-arguments-to-a-macro-usually-cannot-be-the-resulting-expansion-of-another-macro-call"><a class="doc-anchor" href="#the-arguments-to-a-macro-usually-cannot-be-the-resulting-expansion-of-another-macro-call">§</a>The arguments to a macro usually cannot be the resulting expansion of another macro call:</h4>
+<p>Say you have a macro that adds two numbers:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="macro">macro_rules!</span> add{
+    (<span class="macro-nonterminal">$e1</span>:expr, <span class="macro-nonterminal">$e2</span>:expr)=&gt; {<span class="macro-nonterminal">$e1 </span>+ <span class="macro-nonterminal">$e2</span>}
+}</code></pre></div>
+<p>And a macro that expands to two comma-separated numbers:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="macro">macro_rules!</span> two_and_three{
+    ()=&gt;{<span class="number">2</span>,<span class="number">3</span>}
+}</code></pre></div>
+<p>You cannot use the expansion of <code>two_and_three!</code> as an argument to <code>add!</code>:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">let </span>x = <span class="macro">add!</span>(<span class="macro">two_and_three!</span>()); <span class="comment">// error</span></code></pre></div>
+<p>The compiler will complain about no rule in <code>add!</code> accepting <code>two_and_three</code>, since it does not
+get expanded before the <code>add!</code>, who requires two expressions and not just one.</p>
+<p>With eager expansion, this can be made possible:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[macro_use]
+</span><span class="kw">extern crate </span>eager;
+
+<span class="macro">eager_macro_rules!</span>{ <span class="macro-nonterminal">$eager_1
+    </span><span class="macro">macro_rules!</span> add{
+        (<span class="macro-nonterminal">$e1</span>:expr, <span class="macro-nonterminal">$e2</span>:expr)=&gt; {<span class="macro-nonterminal">$e1 </span>+ <span class="macro-nonterminal">$e2</span>}
+    }
+
+    <span class="macro">macro_rules!</span> two_and_three{
+    	()=&gt;{<span class="number">2</span>,<span class="number">3</span>}
+    }
+}
+
+<span class="kw">fn </span>main(){
+	<span class="kw">let </span>x = <span class="macro">eager!</span>{<span class="macro">add!</span>(<span class="macro">two_and_three!</span>())};
+	<span class="macro">assert_eq!</span>(<span class="number">5</span>, x);
+}</code></pre></div>
+<h4 id="macros-are-illegal-in-some-contexts-eg-as-an-identifier"><a class="doc-anchor" href="#macros-are-illegal-in-some-contexts-eg-as-an-identifier">§</a>Macros are illegal in some contexts (e.g. as an identifier)</h4>
+<p>Say you have a macro that expands to an identifier:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="macro">macro_rules!</span> id{
+    ()=&gt; {SomeStruct}
+}</code></pre></div>
+<p>And want to use it to declare a struct:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">struct </span><span class="macro">id!</span>(){
+    v: u32
+}</code></pre></div>
+<p>This will not compile since macros are illegal in identifier position. The compiler does
+not check whether the expansion of the macro will result in valid Rust code.</p>
+<p>With eager expansion, <code>id!</code> will expand before the <code>eager!</code> block , making it possible to use it
+in an identifier position:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[macro_use]
+</span><span class="kw">extern crate </span>eager;
+
+<span class="macro">eager_macro_rules!</span>{ <span class="macro-nonterminal">$eager_1
+    </span><span class="macro">macro_rules!</span> id{
+        ()=&gt; {SomeStruct}
+	}
+}
+
+<span class="macro">eager!</span>{
+    <span class="kw">struct </span><span class="macro">id!</span>(){
+        v: u32
+    }
+}
+
+<span class="kw">fn </span>main(){
+	<span class="kw">let </span>some_struct = SomeStruct{v: <span class="number">4</span>};
+    <span class="macro">assert_eq!</span>(<span class="number">4</span>, some_struct.v);
+}</code></pre></div>
+<p>To circumvent any restriction on where macros can be used, we can therefore just wrap
+the code surrounding the macro call with <code>eager!</code>. The <code>eager!</code> must still be in a valid position,
+but in the worst case it can be put around the whole item
+(struct, trait, implement, function, etc.).</p>
+<h4 id="no-intermediate-expansion-step-can-include-invalid-syntax"><a class="doc-anchor" href="#no-intermediate-expansion-step-can-include-invalid-syntax">§</a>No intermediate expansion step can include invalid syntax</h4>
+<p>Say we want to create a macro that interprets natural language, converting it into an expression.</p>
+<p>We start by declaring a macro that interprets operator words:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="macro">macro_rules!</span> op{
+    ( plus ) =&gt; { + };
+    ( minus ) =&gt; { - };
+}</code></pre></div>
+<p>We then declare a macro that interprets integer words:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="macro">macro_rules!</span> integer{
+    ( one ) =&gt; { <span class="number">1 </span>};
+    ( two ) =&gt; { <span class="number">2 </span>};
+}</code></pre></div>
+<p>Lastly, we declare the top-level macro that uses the previous two macros to
+expand into an expression:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="macro">macro_rules!</span> calculate{
+    ( <span class="macro-nonterminal">$lhs</span>:tt <span class="macro-nonterminal">$op</span>:tt <span class="macro-nonterminal">$rhs</span>:tt ) =&gt; {
+         <span class="macro">integer!</span>{<span class="macro-nonterminal">$lhs</span>} <span class="macro">op!</span>{<span class="macro-nonterminal">$op</span>} <span class="macro">integer!</span>{<span class="macro-nonterminal">$rhs</span>}
+    };
+}</code></pre></div>
+<p>Using this macro will fail to compile:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">let </span>x = <span class="macro">calculate!</span>(one plus two); <span class="comment">//Error</span></code></pre></div>
+<p>Looking at the first expansion step we can see that three macro calls in a sequence
+are not a valid expression:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">let </span>x = <span class="macro">integer!</span>(one) <span class="macro">op!</span>{plus} <span class="macro">integer!</span>(two); <span class="comment">//Error</span></code></pre></div>
+<p>We can circumvent this restriction, by having <code>calculate!</code> wrap its output in an <code>eager!</code>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[macro_use]
+</span><span class="kw">extern crate </span>eager;
+
+<span class="macro">eager_macro_rules!</span>{ <span class="macro-nonterminal">$eager_1
+    </span><span class="macro">macro_rules!</span> op{
+        ( plus ) =&gt; { + };
+        ( minus ) =&gt; { - };
+    }
+
+    <span class="macro">macro_rules!</span> integer{
+        ( one ) =&gt; { <span class="number">1 </span>};
+        ( two ) =&gt; { <span class="number">2 </span>};
+    }
+
+    <span class="macro">macro_rules!</span> calculate{
+        ( <span class="macro-nonterminal">$lhs</span>:tt <span class="macro-nonterminal">$op</span>:tt <span class="macro-nonterminal">$rhs</span>:tt ) =&gt; {
+             <span class="macro">eager!</span>{<span class="macro">integer!</span>{<span class="macro-nonterminal">$lhs</span>} <span class="macro">op!</span>{<span class="macro-nonterminal">$op</span>} <span class="macro">integer!</span>{<span class="macro-nonterminal">$rhs</span>}}
+        };
+	}
+}
+
+<span class="kw">fn </span>main(){
+	<span class="kw">let </span>x = <span class="macro">calculate!</span>(one plus two);
+	<span class="macro">assert_eq!</span>(<span class="number">3</span>, x);
+}</code></pre></div>
+<p>In this case, <code>calculate!</code> does not actually have to be <code>eager!</code>-enabled, since it is not inserted
+into an <code>eager!</code> block. Though - as per <a href="#conventions">the conventions</a> - we do enable it such
+that others may later use it inside an <code>eager!</code> block.</p>
+<h2 id="conventions"><a class="doc-anchor" href="#conventions">§</a>Conventions</h2>
+<p>Since we expect the use of this macro to be broadly applicable, we propose the following
+conventions for the Rust community to use, to ease interoperability.</p>
+<h4 id="documentation"><a class="doc-anchor" href="#documentation">§</a>Documentation</h4>
+<p>To make it clearly visible that a given macro is <code>eager!</code>-enabled, its short rustdoc description
+must start with a pair of brackets, within which a link to the official <code>eager!</code> macro documentation
+must be provided. The link’s visible text must be ‘eager!’ and
+the brackets must not be part of the link.</p>
+<h4 id="auxiliary-variable"><a class="doc-anchor" href="#auxiliary-variable">§</a>Auxiliary variable</h4>
+<p>The auxiliary variable that must always be provided to <code>eager_macro_rules!</code>
+must use the identifier <code>eager_1</code>. This makes it easier for everyone to
+get used to its presence and ignore it. By having it be the same in every project,
+no one has to think about why a given project uses some specific identifier.</p>
+<h2 id="trivia"><a class="doc-anchor" href="#trivia">§</a>Trivia</h2>
+<ul>
+<li>
+<p>Ironically, <code>eager!</code> is not technically <code>eager!</code>-enabled. Instead, it ignores itself if
+it is nested or a macro expands into an <code>eager!</code> block.
+Likewise, <code>eager_macro_rules!</code> is not <code>eager!</code>-enabled, though this might be possible.</p>
+</li>
+<li>
+<p><code>lazy!</code> is treated by <code>eager!</code> as a keyword and not a macro.</p>
+</li>
+<li>
+<p><code>eager_macro_rules!</code>’s auxiliary variable is affectionately called <code>Simon</code>.
+This nickname should probably not be used as the identifier in production code.
+Before reaching production, though…</p>
+</li>
+<li>
+<p>Simon once had a brother called <code>Garkel</code>.</p>
+</li>
+<li>
+<p>It requires continuous effort from <a href="http://github.com/Emoun">Emoun</a> to not
+forcibly rename <code>eager_macro_rules!</code> to <code>eager_macros_rule</code>.</p>
+</li>
+</ul>
+</div></details></section></div></main></body></html>

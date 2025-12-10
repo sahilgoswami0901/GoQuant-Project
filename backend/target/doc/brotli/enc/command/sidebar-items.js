@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["ComputeDistanceCode","GetCopyLengthCode","GetInsertLengthCode","PrefixEncodeCopyDistance","RecomputeDistancePrefixes"],"struct":["BrotliDistanceParams","Command"]};

@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["solana_client",[["impl <a class=\"trait\" href=\"solana_client/nonblocking/tpu_connection/trait.TpuConnection.html\" title=\"trait solana_client::nonblocking::tpu_connection::TpuConnection\">ClientConnection</a> for <a class=\"enum\" href=\"solana_client/connection_cache/enum.NonblockingClientConnection.html\" title=\"enum solana_client::connection_cache::NonblockingClientConnection\">NonblockingClientConnection</a>"]]],["solana_quic_client",[["impl <a class=\"trait\" href=\"solana_connection_cache/nonblocking/client_connection/trait.ClientConnection.html\" title=\"trait solana_connection_cache::nonblocking::client_connection::ClientConnection\">ClientConnection</a> for <a class=\"struct\" href=\"solana_quic_client/nonblocking/quic_client/struct.QuicClientConnection.html\" title=\"struct solana_quic_client::nonblocking::quic_client::QuicClientConnection\">QuicClientConnection</a>"]]],["solana_udp_client",[["impl <a class=\"trait\" href=\"solana_connection_cache/nonblocking/client_connection/trait.ClientConnection.html\" title=\"trait solana_connection_cache::nonblocking::client_connection::ClientConnection\">ClientConnection</a> for <a class=\"struct\" href=\"solana_udp_client/nonblocking/udp_client/struct.UdpClientConnection.html\" title=\"struct solana_udp_client::nonblocking::udp_client::UdpClientConnection\">UdpClientConnection</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[425,473,465]}

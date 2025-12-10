@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BpfUpgradeableLoaderAccountType"],"fn":["parse_bpf_upgradeable_loader"],"struct":["UiBuffer","UiProgram","UiProgramData"]};

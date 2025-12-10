@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Declares eager!-enabled macros."><title>eager_macro_rules in eager - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="eager" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../eager/index.html">eager</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">eager_<wbr>macro_<wbr>rules</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#usage" title="Usage">Usage</a></li><li><a href="#eager-enabling-example" title="`eager!`-enabling example"><code>eager!</code>-enabling example</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate eager</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">eager</a></div><h1>Macro <span class="macro">eager_macro_rules</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/eager/eager_macro_rules.rs.html#45-67">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! eager_macro_rules {
+    (
+		$dollar1:tt $id_1:ident
+		$(
+			$(#[$($metas:tt)*])*
+			macro_rules! $macro_name:ident {
+				$($rules:tt =&gt; $expansions:tt);* $(;)*
+			}
+		)+
+	) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Declares <a href="macro.eager.html">eager!</a>-enabled macros.</p>
+<h2 id="usage"><a class="doc-anchor" href="#usage">§</a>Usage</h2>
+<p>Wraps the usual <code>macro_rules!</code> syntax. First an identifier must be given, preceded by ‘$’.
+Then any number of macro declarations can be given using the usual <code>macro_rules!</code> syntax.
+Documentation and attributes are also given in the
+usual way just before each <code>macro_rules!</code>, i.e. inside <code>eager_macro_rules!</code>.</p>
+<p>Some restrictions apply to the <code>macro_rules!</code> declarations:</p>
+<ul>
+<li>The identifier given at the beginning must not collide with any macro variable name
+used in any rule in any macro to be declared.</li>
+<li>No rules should accept <code>@eager</code> as the first token, as this could conflict with the
+implementation of <code>eager!</code>. Wildcards are acceptable, as <code>eager_macro_rules!</code> will automatically
+resolve the ambiguity with the <code>eager!</code> implementation.</li>
+</ul>
+<h2 id="eager-enabling-example"><a class="doc-anchor" href="#eager-enabling-example">§</a><code>eager!</code>-enabling example</h2>
+<p><a href="macro.eager.html">eager!</a>-enabling the following macro:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="doccomment">/// Some documentation
+</span><span class="attr">#[macro_export]
+</span><span class="macro">macro_rules!</span> some_macro{
+	()=&gt;{};
+}</code></pre></div>
+<p>is done by wrapping it in <code>eager_macro_rules!</code> as follows:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[macro_use] </span><span class="kw">extern crate </span>eager;
+<span class="macro">eager_macro_rules!</span>{ <span class="macro-nonterminal">$eager_1
+	</span><span class="doccomment">/// Some documentation
+    </span><span class="attr">#[macro_export]
+    </span><span class="macro">macro_rules!</span> some_macro{
+	    ()=&gt;{};
+    }
+}</code></pre></div>
+<p>where <code>()=&gt;{};</code> is the list of rules that comprise the macro, and no macro variable is called
+<code>$eager_1</code>.</p>
+</div></details></section></div></main></body></html>
