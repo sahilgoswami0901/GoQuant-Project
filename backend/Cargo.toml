@@ -1,0 +1,63 @@
+[package]
+name = "collateral-vault-backend"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "vault-backend"
+path = "src/main.rs"
+
+[dependencies]
+# Web framework
+actix-web = "4.4"
+actix-ws = "0.2"
+actix-cors = "0.6"
+actix-rt = "2.9"
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+futures = "0.3"
+
+# Database
+deadpool-postgres = "0.11"
+tokio-postgres = { version = "0.7", features = ["with-uuid-1", "with-chrono-0_4"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Solana
+solana-sdk = "1.18"
+solana-client = "1.18"
+spl-token = "4.0"
+spl-associated-token-account = "2.3"
+
+# Encoding
+base64 = "0.21"
+bincode = "1.3"
+
+# Time & UUID
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Configuration
+dotenvy = "0.15"
+
+# Error handling
+thiserror = "1.0"
+
+# Utilities
+shellexpand = "3.1"
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
