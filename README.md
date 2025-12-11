@@ -1121,50 +1121,48 @@ program.addEventListener("DepositEvent", (event, slot) => {
 
 ## Setup & Installation
 
-### Prerequisites
+### Step 1: Install All Dependencies
+
+Install Solana CLI, Rust, Anchor, Node.js, and other required tools with a single command:
 
 ```bash
-# Rust 1.75+
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-rustup default stable
-
-# Solana CLI
-sh -c "$(curl -sSfL https://release.solana.com/v1.17.0/install)"
-
-# Anchor
-cargo install --git https://github.com/coral-xyz/anchor avm --locked
-avm install 0.29.0
-avm use 0.29.0
-
-# Node.js (for testing)
-nvm install 18
-nvm use 18
+curl --proto '=https' --tlsv1.2 -sSfL https://solana-install.solana.workers.dev | bash
 ```
 
-### Build
+**Expected Output:**
+```
+Installed Versions:
 
-```bash
-cd collateral-vault
-anchor build
+Rust: rustc 1.91.1 (ed61e7d7e 2025-11-07)
+Solana CLI: solana-cli 3.0.10 (src:96c3a851; feat:3604001754, client:Agave)
+Anchor CLI: anchor-cli 0.32.1
+Surfpool CLI: surfpool 0.12.0
+Node.js: v24.10.0
+Yarn: 1.22.1
 ```
 
-### Test
+This single command installs:
+- **Rust**: Programming language for Solana programs
+- **Solana CLI**: Command-line tools for Solana
+- **Anchor CLI**: Framework for Solana development
+- **Surfpool CLI**: Additional Solana utilities
+- **Node.js**: JavaScript runtime for testing
+- **Yarn**: Package manager
+
+### Step 2: Verify Installation
 
 ```bash
-anchor test
-```
+# Check Rust version
+rustc --version
 
-### Deploy
+# Check Solana CLI version
+solana --version
 
-```bash
-# Configure for devnet
-solana config set --url devnet
+# Check Anchor version
+anchor --version
 
-# Get some devnet SOL
-solana airdrop 2
-
-# Deploy
-anchor deploy
+# Check Node.js version
+node --version
 ```
 
 ---
@@ -1212,49 +1210,244 @@ describe("collateral-vault", () => {
 
 ## Deployment
 
-### 1. Build for Production
+### Step 1: Deploy Smart Contract to Solana Devnet
+
+#### 1a. Generate Solana Keypair
 
 ```bash
-anchor build --verifiable
+solana-keygen new --outfile ~/.config/solana/id.json --force
 ```
 
-### 2. Deploy to Devnet
+This creates a new Solana keypair. The `--force` flag overwrites any existing keypair.
+
+#### 1b. Get Your Wallet Address
+
+```bash
+solana address
+```
+
+This displays your wallet address (public key). Save this for later use.
+
+#### 1c. Check Wallet Balance
+
+```bash
+solana balance
+```
+
+Shows the current SOL balance of your wallet.
+
+#### 1d. Airdrop SOL for Deployment
+
+```bash
+solana airdrop 3
+```
+
+Airdrops 3 SOL to your wallet. These SOLs are needed for deployment fees.
+
+**Note:** If you see a rate limit error, manually request SOL from [Solana Faucet](https://faucet.solana.com) using your wallet address.
+
+#### 1e. Get Program ID
+
+```bash
+solana address -k target/deploy/collateral_vault-keypair.json
+```
+
+This displays your Program ID. **Important:** Update this Program ID in:
+- `programs/collateral-vault/src/lib.rs` (replace the `declare_id!` macro value)
+- `Anchor.toml` (update the `[programs.devnet]` section)
+
+#### 1f. Build the Program
+
+```bash
+anchor build
+```
+
+This generates the program binaries that will be deployed to Solana.
+
+#### 1g. Deploy to Devnet
 
 ```bash
 anchor deploy --provider.cluster devnet
 ```
 
-### 3. Initialize VaultAuthority
+This deploys your program to Solana Devnet. Wait for the deployment to complete.
 
-```typescript
-const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("vault_authority")],
-    PROGRAM_ID
-);
+#### 1h. Run Tests on Deployed Program
 
-await program.methods
-    .initializeVaultAuthority()
-    .accounts({
-        admin: adminKeypair.publicKey,
-        vaultAuthority: vaultAuthorityPda,
-        systemProgram: SystemProgram.programId,
-    })
-    .signers([adminKeypair])
-    .rpc();
+```bash
+anchor run test-devnet --provider.cluster devnet
 ```
 
-### 4. Add Authorized Programs
+This command:
+- Creates the vault authority
+- Initializes a vault for your account
+- Returns links to view your deployed program on Solana Explorer
 
-```typescript
-await program.methods
-    .addAuthorizedProgram(POSITION_MANAGER_PROGRAM_ID)
-    .accounts({
-        admin: adminKeypair.publicKey,
-        vaultAuthority: vaultAuthorityPda,
-    })
-    .signers([adminKeypair])
-    .rpc();
+**Note:** The test output will include Solana Explorer links where you can verify your deployment.
+
+---
+
+### Step 2: Setup Backend Database
+
+#### 2a. Install Docker Desktop
+
+1. Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+2. **Important:** Make sure Docker Desktop is running before proceeding
+
+#### 2b. Create PostgreSQL Container
+
+```bash
+docker run -d \
+  --name collateral-vault-db \
+  -p 5432:5432 \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=collateral_vault \
+  -v collateral_vault_data:/var/lib/postgresql/data \
+  postgres:15
 ```
+
+This creates a PostgreSQL 15 container with:
+- **Container name**: `collateral-vault-db`
+- **Port**: `5432` (mapped to host)
+- **Username**: `postgres`
+- **Password**: `password`
+- **Database**: `collateral_vault`
+- **Volume**: `collateral_vault_data` (persistent storage)
+
+#### 2c. Drop Existing Database (if exists)
+
+```bash
+docker exec -i collateral-vault-db psql -U postgres -c "DROP DATABASE collateral_vault;"
+```
+
+**Note:** Only run this if you need to reset the database. Skip if setting up for the first time.
+
+#### 2d. Create Database
+
+```bash
+docker exec -i collateral-vault-db psql -U postgres -c "CREATE DATABASE collateral_vault;"
+```
+
+Creates the `collateral_vault` database.
+
+#### 2e. Run Database Migrations
+
+```bash
+docker exec -i collateral-vault-db psql -U postgres -d collateral_vault < backend/migrations/001_initial_schema.sql
+```
+
+This applies the database schema migrations, creating all required tables.
+
+#### 2f. Verify Tables Created
+
+```bash
+docker exec -i collateral-vault-db psql -U postgres -d collateral_vault -c "\dt"
+```
+
+This lists all tables. You should see:
+- `vaults`
+- `transactions`
+- `balance_snapshots`
+- `tvl_snapshots`
+- `reconciliation_logs`
+- `alerts`
+
+---
+
+### Step 3: Build and Start Backend
+
+#### 3a. Build Backend
+
+```bash
+cd backend
+cargo build
+```
+
+This compiles the Rust backend service.
+
+#### 3b. Start Backend Server
+
+```bash
+cargo run
+```
+
+This starts the backend API server at `http://localhost:8080`.
+
+**Keep this terminal running** - the backend needs to stay active.
+
+---
+
+### Step 4: Start Dashboard
+
+Open a **new terminal** and navigate to the dashboard directory:
+
+```bash
+cd dashboard
+streamlit run app.py
+```
+
+This starts the Streamlit dashboard, which will:
+- Connect to the backend database
+- Display real-time updates via WebSocket
+- Show vault balances and transaction history
+
+The dashboard will open in your browser automatically (usually at `http://localhost:8501`).
+
+**Keep this terminal running** - the dashboard needs to stay active.
+
+---
+
+### Step 5: Test the System
+
+Open **another terminal** to test the API endpoints.
+
+#### Example: Deposit USDT
+
+The `test-devnet` command already minted 1000 USDT to your user token account. You can now deposit it into your vault:
+
+```bash
+curl -X POST http://127.0.0.1:8080/vault/deposit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userPubkey": "YOUR_WALLET_ADDRESS",
+    "amount": 100000000,
+    "userKeypairPath": "~/.config/solana/id.json"
+  }'
+```
+
+Replace `YOUR_WALLET_ADDRESS` with the address from `solana address`.
+
+**See [`API_COMMANDS.md`](./API_COMMANDS.md) for complete API documentation.**
+
+---
+
+### Quick Reference: Running Services
+
+You'll need **3 terminals** running simultaneously:
+
+| Terminal | Command | Purpose |
+|----------|---------|---------|
+| **Terminal 1** | `cargo run` (in `backend/`) | Backend API server |
+| **Terminal 2** | `streamlit run app.py` (in `dashboard/`) | Dashboard UI |
+| **Terminal 3** | API calls (`curl`, etc.) | Testing endpoints |
+
+### Troubleshooting
+
+#### Docker Issues
+- **Docker not running**: Start Docker Desktop and wait for it to fully start
+- **Port 5432 already in use**: Stop any existing PostgreSQL instances
+- **Container already exists**: Remove with `docker rm collateral-vault-db`
+
+#### Solana Issues
+- **Rate limit on airdrop**: Use [Solana Faucet](https://faucet.solana.com) manually
+- **Insufficient SOL**: Ensure you have at least 2-3 SOL for deployment
+- **Program ID mismatch**: Make sure `lib.rs` and `Anchor.toml` match the keypair address
+
+#### Backend Issues
+- **Database connection failed**: Verify Docker container is running with `docker ps`
+- **Port 8080 in use**: Change port in backend configuration or stop conflicting service
+- **Migration errors**: Ensure database exists and migrations file path is correct
 
 ---
 
