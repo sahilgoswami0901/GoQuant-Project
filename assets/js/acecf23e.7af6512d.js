@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkmy_docs=globalThis.webpackChunkmy_docs||[]).push([[1903],{1912:o=>{o.exports=JSON.parse('{"blogBasePath":"/GoQuant-Project/blog","blogTitle":"Blog","authorsListPath":"/GoQuant-Project/blog/authors"}')}}]);
