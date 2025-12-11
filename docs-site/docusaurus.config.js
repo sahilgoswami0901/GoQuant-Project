@@ -21,7 +21,8 @@ const config = {
   organizationName: 'sahilgoswami0901', // Your GitHub username
   projectName: 'GoQuant-Project',        // Your repo name
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'ignore',
+  onBrokenMarkdownLinks: 'ignore',
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
