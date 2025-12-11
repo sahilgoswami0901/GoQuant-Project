@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"derive":["AsMut","AsRef","Binary","Deref","DerefMut","Display","Error","From","LowerExp","LowerHex","Octal","Pointer","UpperExp","UpperHex"],"mod":["derive","with_trait"]};

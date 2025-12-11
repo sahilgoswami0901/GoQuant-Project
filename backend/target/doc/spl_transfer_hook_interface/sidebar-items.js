@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["NAMESPACE"],"fn":["collect_extra_account_metas_seeds","collect_extra_account_metas_signer_seeds","get_extra_account_metas_address","get_extra_account_metas_address_and_bump_seed"],"mod":["error","instruction","offchain","onchain"]};

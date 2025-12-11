@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Mach"],"fn":["parse_magic_and_ctx","peek"],"mod":["bind_opcodes","constants","exports","fat","header","imports","load_command","relocation","segment","symbols"],"struct":["FatArchIterator","MachO","MachOIterator","MultiArch"]};

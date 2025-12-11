@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"attr":["spl_program_error"],"derive":["DecodeError","IntoProgramError","PrintProgramError"]};

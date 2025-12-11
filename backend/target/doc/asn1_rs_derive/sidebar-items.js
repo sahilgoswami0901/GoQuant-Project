@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"derive":["BerAlias","BerSequence","BerSet","DerAlias","DerSequence","DerSet"]};

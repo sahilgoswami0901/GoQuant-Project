@@ -1,8 +1,0 @@
-/Users/sahilgoswami/Desktop/GoQuant Project/collateral-vault/backend/target/debug/deps/solana_udp_client-2b0329c8b9049bdd.d: /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/lib.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/nonblocking/mod.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/nonblocking/udp_client.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/udp_client.rs
-
-/Users/sahilgoswami/Desktop/GoQuant Project/collateral-vault/backend/target/debug/deps/libsolana_udp_client-2b0329c8b9049bdd.rmeta: /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/lib.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/nonblocking/mod.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/nonblocking/udp_client.rs /Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/udp_client.rs
-
-/Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/lib.rs:
-/Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/nonblocking/mod.rs:
-/Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/nonblocking/udp_client.rs:
-/Users/sahilgoswami/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana-udp-client-1.18.26/src/udp_client.rs:

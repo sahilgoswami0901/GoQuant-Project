@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["enable_recycler_warming"],"struct":["Recycler","RecyclerX"],"trait":["Reset"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["main"],"mod":["api","config","db","models","services","solana","utils","websocket"],"struct":["AppState"]};

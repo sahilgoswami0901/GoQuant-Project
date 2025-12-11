@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["encode_int","encode_oid"]};

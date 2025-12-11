@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["x86_64_asm_mul","x86_64_asm_square"]};

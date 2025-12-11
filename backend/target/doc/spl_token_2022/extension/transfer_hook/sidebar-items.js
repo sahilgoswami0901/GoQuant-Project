@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["get_program_id","set_transferring","unset_transferring"],"mod":["instruction","processor"],"struct":["TransferHook","TransferHookAccount"]};

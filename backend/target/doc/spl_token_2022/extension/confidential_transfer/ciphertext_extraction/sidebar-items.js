@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["transfer_amount_source_ciphertext"],"struct":["SourceDecryptHandles","TransferProofContextInfo","TransferPubkeysInfo","TransferWithFeeProofContextInfo","TransferWithFeePubkeysInfo"]};

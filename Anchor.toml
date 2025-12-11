@@ -6,10 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-collateral_vault = "5nf16sQkkaRMybxk7kD92847W8E3VaonKC5sHsqBXCFD"
+collateral_vault = "6DXunQxjcEx6V978DDho6A4GoKVk39HrAVtjtLywSy4Q"
 
 [programs.localnet]
-collateral_vault = "5nf16sQkkaRMybxk7kD92847W8E3VaonKC5sHsqBXCFD"
+collateral_vault = "6DXunQxjcEx6V978DDho6A4GoKVk39HrAVtjtLywSy4Q"
 
 [registry]
 url = "https://api.apr.dev"

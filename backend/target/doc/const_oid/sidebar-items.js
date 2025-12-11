@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Arcs","Error","ObjectIdentifier"],"type":["Arc","Result"]};

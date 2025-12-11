@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["process_initialize_group","process_initialize_member","process_instruction","process_update_group_authority","process_update_group_max_size"]};

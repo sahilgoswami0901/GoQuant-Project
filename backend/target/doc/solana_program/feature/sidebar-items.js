@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["ID"],"fn":["activate","activate_with_lamports","check_id","id"],"struct":["Feature"]};

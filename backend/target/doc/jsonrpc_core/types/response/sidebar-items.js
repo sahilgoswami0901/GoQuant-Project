@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Output","Response"],"struct":["Failure","Success"]};

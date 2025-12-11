@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["LegendreSymbol","SqrtPrecomputation"],"fn":["batch_inversion","batch_inversion_and_mul"],"mod":["arithmetic","field_hashers","models","utils"],"trait":["CyclotomicMultSubgroup","FftField","Field","PrimeField"]};

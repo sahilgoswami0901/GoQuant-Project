@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["TransactionStatus","TransactionType"],"struct":["Alert","BalanceSnapshot","ReconciliationLog","TransactionRecord","TvlSnapshot","VaultRecord"]};

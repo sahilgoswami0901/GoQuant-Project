@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["brotli","flate","gzip","zlib"],"trait":["Decode","DecodeV2","DecodedSize","Encode","EncodeV2"]};

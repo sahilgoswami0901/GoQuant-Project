@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["HashToCurveError"],"mod":["curve_maps","map_to_curve_hasher"],"trait":["HashToCurve"]};

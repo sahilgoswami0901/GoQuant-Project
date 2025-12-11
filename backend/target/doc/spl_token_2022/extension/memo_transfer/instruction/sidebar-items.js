@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["RequiredMemoTransfersInstruction"],"fn":["disable_required_transfer_memos","enable_required_transfer_memos"]};

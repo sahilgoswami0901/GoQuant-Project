@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["theme"],"struct":["Confirm","Editor","Input","MultiSelect","Password","Select","Sort"],"trait":["Validator"]};

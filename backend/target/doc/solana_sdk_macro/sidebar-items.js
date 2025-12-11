@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"attr":["wasm_bindgen_stub"],"derive":["CloneZeroed"],"macro":["declare_deprecated_id","declare_id","program_declare_deprecated_id","program_declare_id","program_pubkey","pubkey","pubkeys","respan"]};

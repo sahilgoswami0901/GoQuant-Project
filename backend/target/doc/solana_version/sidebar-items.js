@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["semver","version"],"struct":["LegacyVersion1","LegacyVersion2","Version"]};

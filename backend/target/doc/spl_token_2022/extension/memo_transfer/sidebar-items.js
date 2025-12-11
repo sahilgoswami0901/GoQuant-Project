@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["check_previous_sibling_instruction_is_memo","memo_required"],"mod":["instruction","processor"],"struct":["MemoTransfer"]};

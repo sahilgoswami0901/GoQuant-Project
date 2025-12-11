@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["is_niceness_adjustment_valid","is_renice_allowed","renice_this_thread"]};

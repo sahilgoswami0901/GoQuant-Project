@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["LookupTableAccountType"],"fn":["parse_address_lookup_table"],"struct":["UiLookupTable"]};

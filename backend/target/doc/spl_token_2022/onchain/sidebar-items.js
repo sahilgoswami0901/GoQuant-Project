@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["invoke_transfer_checked"]};

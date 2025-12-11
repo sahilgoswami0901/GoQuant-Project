@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_COMPUTE_UNITS"],"struct":["Entrypoint"]};

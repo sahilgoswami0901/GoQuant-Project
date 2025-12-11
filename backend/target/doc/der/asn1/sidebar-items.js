@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Any","BitString","BitStringIter","ContextSpecific","ContextSpecificRef","GeneralizedTime","Ia5String","Null","ObjectIdentifier","OctetString","OptionalRef","PrintableString","SequenceOf","SequenceOfIter","SetOf","SetOfIter","SetOfVec","UIntBytes","UtcTime","Utf8String"],"trait":["Choice","Sequence"]};

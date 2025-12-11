@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["eager","eager_macro_rules","lazy"]};

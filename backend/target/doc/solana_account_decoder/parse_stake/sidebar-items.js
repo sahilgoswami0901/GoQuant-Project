@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["StakeAccountType"],"fn":["parse_stake"],"struct":["UiAuthorized","UiDelegation","UiLockup","UiMeta","UiStake","UiStakeAccount"]};

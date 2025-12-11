@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"derive":["Pod","Zeroable"],"struct":["PodScalar"],"trait":["Pod","Zeroable"]};

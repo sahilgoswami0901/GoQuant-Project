@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["PodBool","PodI16","PodI64","PodU16","PodU32","PodU64"]};

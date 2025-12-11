@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["create_pda_account","get_account_len"]};

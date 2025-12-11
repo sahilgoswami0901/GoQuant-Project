@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"derive":["Zeroize"],"struct":["Zeroizing"],"trait":["DefaultIsZeroes","TryZeroize","Zeroize"]};

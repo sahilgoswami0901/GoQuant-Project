@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Error","Version"],"struct":["AlgorithmIdentifier","ObjectIdentifier","PrivateKeyDocument","PrivateKeyInfo","PublicKeyDocument","SubjectPublicKeyInfo"],"trait":["DecodePrivateKey","DecodePublicKey","EncodePrivateKey","EncodePublicKey"],"type":["Result"]};

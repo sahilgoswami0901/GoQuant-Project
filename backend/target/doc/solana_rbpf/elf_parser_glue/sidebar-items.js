@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["GoblinParser","NewParser"],"trait":["ElfParser","ElfProgramHeader","ElfRelocation","ElfSectionHeader","ElfSymbol"]};

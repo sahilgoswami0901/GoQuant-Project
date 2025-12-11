@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["extract_and_fmt_memos","spl_memo_id_v1","spl_memo_id_v3"],"trait":["ExtractMemos"]};

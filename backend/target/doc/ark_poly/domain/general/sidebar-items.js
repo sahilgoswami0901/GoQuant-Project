@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["GeneralEvaluationDomain"],"struct":["Elements","GeneralElements"]};

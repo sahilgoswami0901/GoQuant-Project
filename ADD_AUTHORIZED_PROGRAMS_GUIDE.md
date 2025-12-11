@@ -164,3 +164,4 @@ anchor test --provider.cluster devnet --skip-deploy
 
 That's it! The authorized programs will be added automatically when you run your tests. 🎉
 
+

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["oid"],"mod":["ber","der","error","oid"],"struct":["Oid"],"type":["IResult"]};

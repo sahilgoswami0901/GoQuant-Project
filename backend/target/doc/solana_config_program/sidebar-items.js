@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["create_config_account","get_config_data","id"],"mod":["config_instruction","config_processor","date_instruction"],"struct":["ConfigKeys"],"trait":["ConfigState"]};

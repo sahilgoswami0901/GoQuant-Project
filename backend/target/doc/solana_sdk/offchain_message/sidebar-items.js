@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["MessageFormat","OffchainMessage"],"fn":["is_printable_ascii","is_utf8"],"mod":["v0"]};

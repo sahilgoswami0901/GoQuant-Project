@@ -1,9 +1,0 @@
-(function() {
-    var implementors = Object.fromEntries([["solana_program",[]],["solana_sdk",[["impl <a class=\"trait\" href=\"solana_sdk/sanitize/trait.Sanitize.html\" title=\"trait solana_sdk::sanitize::Sanitize\">Sanitize</a> for <a class=\"struct\" href=\"solana_sdk/signature/struct.Signature.html\" title=\"struct solana_sdk::signature::Signature\">Signature</a>"],["impl <a class=\"trait\" href=\"solana_sdk/sanitize/trait.Sanitize.html\" title=\"trait solana_sdk::sanitize::Sanitize\">Sanitize</a> for <a class=\"struct\" href=\"solana_sdk/transaction/struct.Transaction.html\" title=\"struct solana_sdk::transaction::Transaction\">Transaction</a>"]]],["solana_version",[["impl <a class=\"trait\" href=\"solana_program/sanitize/trait.Sanitize.html\" title=\"trait solana_program::sanitize::Sanitize\">Sanitize</a> for <a class=\"struct\" href=\"solana_version/struct.LegacyVersion1.html\" title=\"struct solana_version::LegacyVersion1\">LegacyVersion1</a>"],["impl <a class=\"trait\" href=\"solana_program/sanitize/trait.Sanitize.html\" title=\"trait solana_program::sanitize::Sanitize\">Sanitize</a> for <a class=\"struct\" href=\"solana_version/struct.LegacyVersion2.html\" title=\"struct solana_version::LegacyVersion2\">LegacyVersion2</a>"],["impl <a class=\"trait\" href=\"solana_program/sanitize/trait.Sanitize.html\" title=\"trait solana_program::sanitize::Sanitize\">Sanitize</a> for <a class=\"struct\" href=\"solana_version/struct.Version.html\" title=\"struct solana_version::Version\">Version</a>"]]]]);
-    if (window.register_implementors) {
-        window.register_implementors(implementors);
-    } else {
-        window.pending_implementors = implementors;
-    }
-})()
-//{"start":57,"fragment_lengths":[21,581,861]}

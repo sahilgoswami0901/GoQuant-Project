@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ApiError","ApiResponse","BalanceHistoryResponse","BalanceSnapshotResponse","HealthResponse","OperationResponse","TransactionListResponse","TransactionResponse","TvlResponse","VaultBalanceResponse"]};

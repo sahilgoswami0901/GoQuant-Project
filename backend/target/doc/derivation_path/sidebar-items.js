@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ChildIndex","ChildIndexError","ChildIndexParseError","DerivationPathError","DerivationPathParseError","DerivationPathType"],"struct":["DerivationPath"]};

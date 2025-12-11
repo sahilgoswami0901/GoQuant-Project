@@ -1,1 +1,0 @@
-searchState.loadedDescShard("ark_ff_macros", 0, "Derive the <code>MontConfig</code> trait.\nAttribute used to unroll for loops found inside a function …")

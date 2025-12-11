@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Consumed","FastResult","Info","StringStreamError","UnexpectedParse"],"struct":["Tracked"],"trait":["ParseError","StreamError"],"type":["ConsumedResult","ParseResult","ParseResult2"]};

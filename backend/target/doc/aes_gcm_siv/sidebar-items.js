@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["A_MAX","C_MAX","P_MAX"],"struct":["AesGcmSiv"],"type":["Aes128GcmSiv","Aes256GcmSiv","Key","Nonce","Tag"]};

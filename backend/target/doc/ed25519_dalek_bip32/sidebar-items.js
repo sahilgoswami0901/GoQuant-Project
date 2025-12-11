@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ChildIndex","Error"],"externcrate":["derivation_path","ed25519_dalek"],"struct":["DerivationPath","ExtendedSecretKey","PublicKey","SecretKey"],"type":["Result"]};

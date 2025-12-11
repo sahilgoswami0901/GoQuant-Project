@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["AccessType","MemoryMapping","MemoryState"],"struct":["AlignedMemoryMapping","MemoryRegion","UnalignedMemoryMapping"],"type":["MemoryCowCallback"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["LOOKUP_TABLE_MAX_ADDRESSES","LOOKUP_TABLE_META_SIZE"],"enum":["LookupTableStatus","ProgramState"],"struct":["AddressLookupTable","LookupTableMeta"]};

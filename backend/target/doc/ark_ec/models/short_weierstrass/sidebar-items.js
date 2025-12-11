@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["SWFlags"],"struct":["Affine","Projective"],"trait":["SWCurveConfig"]};

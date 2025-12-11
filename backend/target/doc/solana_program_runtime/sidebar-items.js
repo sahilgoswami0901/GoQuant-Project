@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["declare_process_instruction","ic_logger_msg","ic_msg","report_execute_timings","with_mock_invoke_context"],"mod":["compute_budget","compute_budget_processor","invoke_context","loaded_programs","log_collector","message_processor","prioritization_fee","stable_log","sysvar_cache","timings"]};

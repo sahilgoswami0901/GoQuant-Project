@@ -1,1 +1,0 @@
-searchState.loadedDescShard("spl_discriminator_derive", 0, "Derive macro library for the <code>spl-discriminator</code> library\nDerive macro library to implement the <code>SplDiscriminate</code> trait")

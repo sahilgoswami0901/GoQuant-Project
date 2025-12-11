@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["SECTION_NAME_LENGTH_MAXIMUM"],"enum":["ElfParserError"],"mod":["consts","types"],"struct":["Elf64"]};

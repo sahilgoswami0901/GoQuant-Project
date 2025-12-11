@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["HASH_LEN","MAX_X5_LEN"],"enum":["PoseidonError"],"fn":["bytes_to_prime_field_element_be","bytes_to_prime_field_element_le","validate_bytes_length"],"mod":["parameters"],"struct":["Poseidon","PoseidonParameters"],"trait":["PoseidonBytesHasher","PoseidonHasher"]};

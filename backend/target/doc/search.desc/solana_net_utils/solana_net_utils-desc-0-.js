@@ -1,1 +1,0 @@
-searchState.loadedDescShard("solana_net_utils", 0, "The <code>net_utils</code> module assists with networking\nA data type representing a public Udp socket\nReturns the argument unchanged.\nDetermine the public IP address of this machine by asking …\nCalls <code>U::from(self)</code>.\nStarts a simple TCP server on the given port that echos …")

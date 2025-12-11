@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ParsedAccountSource"],"fn":["parse_legacy_message_accounts","parse_v0_message_accounts"],"struct":["ParsedAccount"]};

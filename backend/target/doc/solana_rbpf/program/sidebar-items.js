@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["SBPFVersion"],"struct":["BuiltinProgram","FunctionRegistry"],"type":["BuiltinFunction"]};

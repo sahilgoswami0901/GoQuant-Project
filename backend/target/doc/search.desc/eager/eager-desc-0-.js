@@ -1,1 +1,0 @@
-searchState.loadedDescShard("eager", 0, "This crate contians three macros used to simulate eager …\nEmulates eager expansion of macros.\nDeclares eager!-enabled macros.\n[eager!] Used within an <code>eager!</code> to revert to lazy expansion.")

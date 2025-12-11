@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["DatabaseError"],"mod":["models","queries"],"struct":["Database"]};

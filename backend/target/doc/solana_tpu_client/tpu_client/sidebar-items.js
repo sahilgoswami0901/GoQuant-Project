@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_FANOUT_SLOTS","DEFAULT_TPU_CONNECTION_POOL_SIZE","DEFAULT_TPU_ENABLE_UDP","DEFAULT_TPU_USE_QUIC","MAX_FANOUT_SLOTS"],"struct":["TpuClient","TpuClientConfig"],"type":["Result"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["ACCOUNT_INITIALIZED_INDEX"],"enum":["AccountState"],"fn":["is_initialized_account"],"struct":["Account","Mint","Multisig"],"trait":["GenericTokenAccount"]};

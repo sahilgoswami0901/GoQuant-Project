@@ -27,12 +27,20 @@ def create_websocket_component(user_pubkey, backend_url="ws://localhost:8080"):
     websocket_js = f"""
     <script>
         (function() {{
+            // Prevent multiple WebSocket connections
+            if (window.vaultWebSocket && window.vaultWebSocket.readyState === WebSocket.OPEN) {{
+                console.log('⚠️ WebSocket already connected, reusing existing connection');
+                return;
+            }}
+            
             // Wait for DOM to be ready
             let lastBalance = null;
             let notificationCount = 0;
+            let reloadScheduled = false;
             
             // Connect to WebSocket
             const ws = new WebSocket('{ws_url}');
+            window.vaultWebSocket = ws; // Store globally to prevent duplicates
             
             // Update status display - always find element dynamically
             function updateStatus(status, message) {{
@@ -120,39 +128,66 @@ def create_websocket_component(user_pubkey, backend_url="ws://localhost:8080"):
             ws.onmessage = function(event) {{
                 try {{
                     const message = JSON.parse(event.data);
-                    console.log('WebSocket message received:', message);
-                    console.log('Event type:', message.event);
+                    console.log('📨 WebSocket message received:', message);
+                    console.log('📋 Event type:', message.event);
+                    console.log('📊 Event data:', message.data);
                     
                     // Handle different event types
                     if (message.event === 'balance_update' || message.event === 'balanceUpdate') {{
                         const data = message.data;
-                        const totalBalance = (data.totalBalance / 1000000).toFixed(2);
-                        const availableBalance = (data.availableBalance / 1000000).toFixed(2);
-                        const lockedBalance = (data.lockedBalance / 1000000).toFixed(2);
+                        const totalBalance = data.totalBalance || 0;
+                        const availableBalance = data.availableBalance || 0;
+                        const lockedBalance = data.lockedBalance || 0;
+                        
+                        const totalBalanceFormatted = (totalBalance / 1000000).toFixed(2);
+                        const availableBalanceFormatted = (availableBalance / 1000000).toFixed(2);
+                        const lockedBalanceFormatted = (lockedBalance / 1000000).toFixed(2);
+                        
+                        console.log('💰 Balance update received:', {{
+                            total: totalBalanceFormatted,
+                            available: availableBalanceFormatted,
+                            locked: lockedBalanceFormatted,
+                            rawData: data
+                        }});
                         
                         // Store latest balance
                         lastBalance = {{
-                            total: totalBalance,
-                            available: availableBalance,
-                            locked: lockedBalance
-                        }};
-                        
-                        // Store latest balance
-                        lastBalance = {{
-                            total: totalBalance,
-                            available: availableBalance,
-                            locked: lockedBalance
+                            total: totalBalanceFormatted,
+                            available: availableBalanceFormatted,
+                            locked: lockedBalanceFormatted
                         }};
                         
                         // Show notification
                         notificationCount++;
                         updateStatus('connected', 
-                            `💰 Balance updated! Total: ${{totalBalance}} USDT, Locked: ${{lockedBalance}} USDT (Update #${{notificationCount}})`);
+                            `💰 Balance updated! Total: ${{totalBalanceFormatted}} USDT, Available: ${{availableBalanceFormatted}} USDT, Locked: ${{lockedBalanceFormatted}} USDT`);
                         
-                        // Trigger refresh - reload page to get latest balance
-                        setTimeout(() => {{
-                            window.location.reload();
-                        }}, 500);
+                        // Dispatch custom event for Streamlit to handle
+                        const balanceEvent = new CustomEvent('balanceUpdated', {{
+                            detail: {{
+                                totalBalance: totalBalance,
+                                availableBalance: availableBalance,
+                                lockedBalance: lockedBalance,
+                                formattedTotal: totalBalanceFormatted,
+                                formattedAvailable: availableBalanceFormatted,
+                                formattedLocked: lockedBalanceFormatted
+                            }}
+                        }});
+                        window.dispatchEvent(balanceEvent);
+                        
+                        // Schedule reload only once to avoid multiple reloads
+                        if (!reloadScheduled) {{
+                            reloadScheduled = true;
+                            // Delay reload to ensure WebSocket stays open for other messages
+                            // Use a longer delay (5 seconds) to avoid closing connection too quickly
+                            setTimeout(() => {{
+                                console.log('🔄 Triggering page reload to refresh balance display...');
+                                reloadScheduled = false;
+                                window.location.reload();
+                            }}, 5000);
+                        }} else {{
+                            console.log('⏸️ Reload already scheduled, skipping...');
+                        }}
                     }}
                     
                     if (message.event === 'transaction_confirmed' || message.event === 'transactionConfirmed') {{
@@ -163,11 +198,30 @@ def create_websocket_component(user_pubkey, backend_url="ws://localhost:8080"):
                         updateStatus('connected', 
                             `✅ Transaction confirmed: ${{txType}} of ${{amount}} USDT`);
                         
-                        // Trigger refresh
-                        const customEvent = new CustomEvent('transactionConfirmed', {{
+                        console.log('✅ Transaction confirmed:', txType, amount, 'USDT');
+                        
+                        // Dispatch custom event for Streamlit
+                        const txEvent = new CustomEvent('transactionConfirmed', {{
                             detail: data
                         }});
-                        window.dispatchEvent(customEvent);
+                        window.dispatchEvent(txEvent);
+                        
+                        // Schedule reload only once
+                        if (!reloadScheduled) {{
+                            reloadScheduled = true;
+                            setTimeout(() => {{
+                                reloadScheduled = false;
+                                if (window.parent && window.parent.postMessage) {{
+                                    window.parent.postMessage({{
+                                        type: 'streamlit:rerun'
+                                    }}, '*');
+                                }} else {{
+                                    setTimeout(() => {{
+                                        window.location.reload();
+                                    }}, 2000);
+                                }}
+                            }}, 2000);
+                        }}
                     }}
                     
                     // Handle collateral locked event

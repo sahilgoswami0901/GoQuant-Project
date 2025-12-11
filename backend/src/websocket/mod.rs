@@ -225,27 +225,41 @@ impl WsRegistry {
         let json = message.to_json()
             .map_err(|e| format!("Failed to serialize message: {}", e))?;
 
-        let sessions = self.sessions.lock().await;
+        let mut sessions = self.sessions.lock().await;
         
-        if let Some(senders) = sessions.get(user) {
+        if let Some(senders) = sessions.get_mut(user) {
             let mut sent_count = 0;
-            let mut errors = Vec::new();
+            let mut dead_senders = Vec::new();
             
-            for sender in senders.iter() {
+            // Check each sender and send message, marking dead ones for removal
+            for (idx, sender) in senders.iter().enumerate() {
+                // Check if sender has any active receivers before trying to send
+                if sender.receiver_count() == 0 {
+                    dead_senders.push(idx);
+                    continue;
+                }
+                
                 match sender.send(json.clone()) {
                     Ok(_) => sent_count += 1,
-                    Err(e) => {
-                        errors.push(e.to_string());
+                    Err(_) => {
+                        // Sender is closed, mark for removal
+                        dead_senders.push(idx);
                     }
                 }
             }
             
-            if sent_count > 0 {
-                debug!("Sent message to user {} ({} connections)", user, sent_count);
+            // Remove dead senders (in reverse order to maintain indices)
+            for &idx in dead_senders.iter().rev() {
+                senders.remove(idx);
             }
             
-            if !errors.is_empty() {
-                warn!("Failed to send to some connections for user {}: {:?}", user, errors);
+            // If no senders left, remove the user entry
+            if senders.is_empty() {
+                sessions.remove(user);
+            }
+            
+            if sent_count > 0 {
+                debug!("Sent message to user {} ({} connections)", user, sent_count);
             }
             
             Ok(())
@@ -384,12 +398,20 @@ pub async fn websocket_handler(
         // Spawn a task to forward messages from registry to WebSocket
         let mut session_clone = session.clone();
         let user_for_task = user_clone.clone();
+        let ws_registry_for_cleanup = ws_registry_clone.clone();
         actix_rt::spawn(async move {
             while let Ok(msg) = rx.recv().await {
-                if let Err(e) = session_clone.text(msg).await {
-                    error!("Failed to send message to {}: {}", user_for_task, e);
-                    break;
-        }
+                match session_clone.text(msg).await {
+                    Ok(_) => {
+                        // Message sent successfully
+                    }
+                    Err(e) => {
+                        debug!("WebSocket session closed for {}: {}. Stopping message forwarding.", user_for_task, e);
+                        // Unregister this connection since it's dead
+                        ws_registry_for_cleanup.unregister(&user_for_task).await;
+                        break;
+                    }
+                }
             }
         });
 

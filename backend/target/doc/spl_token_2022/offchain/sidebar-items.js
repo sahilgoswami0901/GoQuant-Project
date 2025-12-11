@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["resolve_extra_transfer_account_metas"],"type":["AccountDataResult","AccountFetchError"]};

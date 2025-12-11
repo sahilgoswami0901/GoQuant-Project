@@ -96,7 +96,7 @@ pub use state::*;
 
 // Declare the program ID
 // This is a placeholder - replace with actual program ID after deployment
-declare_id!("5nf16sQkkaRMybxk7kD92847W8E3VaonKC5sHsqBXCFD");
+declare_id!("6DXunQxjcEx6V978DDho6A4GoKVk39HrAVtjtLywSy4Q");
 
 /// # Collateral Vault Program
 /// 

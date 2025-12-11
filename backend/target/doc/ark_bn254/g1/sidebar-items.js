@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["G1_GENERATOR_X","G1_GENERATOR_Y"],"struct":["Config"],"type":["G1Affine"]};

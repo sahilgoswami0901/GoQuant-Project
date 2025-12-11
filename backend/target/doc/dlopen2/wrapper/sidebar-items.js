@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"derive":["WrapperApi","WrapperMultiApi"],"struct":["Container","OptionalContainer"],"trait":["WrapperApi","WrapperMultiApi"]};

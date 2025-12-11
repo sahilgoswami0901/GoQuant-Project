@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["MetadataPointerInstruction"],"fn":["initialize","update"],"struct":["InitializeInstructionData","UpdateInstructionData"]};

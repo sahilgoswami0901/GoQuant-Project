@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ElGamalError"],"struct":["DecryptHandle","ElGamal","ElGamalCiphertext","ElGamalKeypair","ElGamalPubkey","ElGamalSecretKey"]};

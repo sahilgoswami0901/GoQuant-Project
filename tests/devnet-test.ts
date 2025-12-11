@@ -94,8 +94,19 @@ describe("collateral-vault-devnet", () => {
             usdtMint,
             user.publicKey
         );
-        userTokenAccount = userAta.address;
-        console.log("✓ User token account:", userTokenAccount.toBase58());
+        
+        // Check if account exists, if not create it
+        try {
+            await getAccount(provider.connection, userAta.address);
+        } catch {
+            await getOrCreateAssociatedTokenAccount(
+                provider.connection,
+                user,
+                usdtMint,
+                user.publicKey
+            );
+        }
+        console.log("✓ User token account:", userAta.address.toBase58());
 
         // Mint test USDT to user
         console.log("Minting 1000 test USDT...");
@@ -103,7 +114,7 @@ describe("collateral-vault-devnet", () => {
             provider.connection,
             user,
             usdtMint,
-            userTokenAccount,
+            userAta.address,
             user.publicKey,
             INITIAL_BALANCE
         );

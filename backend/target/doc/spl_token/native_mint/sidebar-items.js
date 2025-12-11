@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DECIMALS","ID"],"fn":["check_id","id"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ErrorKind"],"mod":["prelude"],"struct":["Cursor","Error"],"trait":["Read","Write"],"type":["Result"]};

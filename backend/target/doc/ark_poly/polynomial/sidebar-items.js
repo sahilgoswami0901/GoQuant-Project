@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["multivariate","univariate"],"trait":["DenseMVPolynomial","DenseUVPolynomial","Polynomial"]};

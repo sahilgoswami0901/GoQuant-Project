@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["TokenMinterError"],"struct":["TokenMinter"]};

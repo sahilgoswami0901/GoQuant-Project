@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_INSTRUCTION_COMPUTE_UNIT_LIMIT","MAX_COMPUTE_UNIT_LIMIT","MAX_LOADED_ACCOUNTS_DATA_SIZE_BYTES"],"fn":["process_compute_budget_instructions"],"struct":["ComputeBudgetLimits"]};

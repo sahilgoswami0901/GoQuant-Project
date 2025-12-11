@@ -346,33 +346,48 @@ pub async fn deposit(
         Ok(result) => {
             // Send WebSocket notification if transaction was confirmed
             if let Some(signature) = &result.signature {
+                // Small delay to ensure database transaction is committed
+                tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+                
                 // Get updated balance for notification
-                if let Ok(balance) = state.vault_manager.get_vault_balance(&user_pubkey).await {
-                    // Send balance update
-                    let _ = send_to_user(
-                        &state,
-                        &user_pubkey,
-                        WsEventType::BalanceUpdate,
-                        BalanceUpdateData {
-                            owner: user_pubkey.clone(),
-                            total_balance: balance.total_balance,
-                            locked_balance: balance.locked_balance,
-                            available_balance: balance.available_balance,
-                        },
-                    ).await;
-                    
-                    // Send transaction confirmed
-                    let _ = send_to_user(
-                        &state,
-                        &user_pubkey,
-                        WsEventType::TransactionConfirmed,
-                        TransactionConfirmedData {
-                            transaction_id: result.transaction_id.to_string(),
-                            transaction_type: "deposit".to_string(),
-                            amount: amount as i64,
-                            signature: signature.clone(),
-                        },
-                    ).await;
+                match state.vault_manager.get_vault_balance(&user_pubkey).await {
+                    Ok(balance) => {
+                        info!("📊 Sending WebSocket events for deposit - Balance: {} USDT", 
+                            balance.total_balance as f64 / 1_000_000.0);
+                        
+                        // Send balance update
+                        if let Err(e) = send_to_user(
+                            &state,
+                            &user_pubkey,
+                            WsEventType::BalanceUpdate,
+                            BalanceUpdateData {
+                                owner: user_pubkey.clone(),
+                                total_balance: balance.total_balance,
+                                locked_balance: balance.locked_balance,
+                                available_balance: balance.available_balance,
+                            },
+                        ).await {
+                            warn!("Failed to send balance update via WebSocket: {}", e);
+                        }
+                        
+                        // Send transaction confirmed
+                        if let Err(e) = send_to_user(
+                            &state,
+                            &user_pubkey,
+                            WsEventType::TransactionConfirmed,
+                            TransactionConfirmedData {
+                                transaction_id: result.transaction_id.to_string(),
+                                transaction_type: "deposit".to_string(),
+                                amount: amount as i64,
+                                signature: signature.clone(),
+                            },
+                        ).await {
+                            warn!("Failed to send transaction confirmed via WebSocket: {}", e);
+                        }
+                    }
+                    Err(e) => {
+                        warn!("Failed to fetch balance for WebSocket notification: {}", e);
+                    }
                 }
             }
             
@@ -472,33 +487,48 @@ pub async fn withdraw(
         Ok(result) => {
             // Send WebSocket notification if transaction was confirmed
             if let Some(signature) = &result.signature {
+                // Small delay to ensure database transaction is committed
+                tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+                
                 // Get updated balance for notification
-                if let Ok(balance) = state.vault_manager.get_vault_balance(&user_pubkey).await {
-                    // Send balance update
-                    let _ = send_to_user(
-                        &state,
-                        &user_pubkey,
-                        WsEventType::BalanceUpdate,
-                        BalanceUpdateData {
-                            owner: user_pubkey.clone(),
-                            total_balance: balance.total_balance,
-                            locked_balance: balance.locked_balance,
-                            available_balance: balance.available_balance,
-                        },
-                    ).await;
-                    
-                    // Send transaction confirmed
-                    let _ = send_to_user(
-                        &state,
-                        &user_pubkey,
-                        WsEventType::TransactionConfirmed,
-                        TransactionConfirmedData {
-                            transaction_id: result.transaction_id.to_string(),
-                            transaction_type: "withdraw".to_string(),
-                            amount: amount as i64,
-                            signature: signature.clone(),
-                        },
-                    ).await;
+                match state.vault_manager.get_vault_balance(&user_pubkey).await {
+                    Ok(balance) => {
+                        info!("📊 Sending WebSocket events for withdrawal - Balance: {} USDT", 
+                            balance.total_balance as f64 / 1_000_000.0);
+                        
+                        // Send balance update
+                        if let Err(e) = send_to_user(
+                            &state,
+                            &user_pubkey,
+                            WsEventType::BalanceUpdate,
+                            BalanceUpdateData {
+                                owner: user_pubkey.clone(),
+                                total_balance: balance.total_balance,
+                                locked_balance: balance.locked_balance,
+                                available_balance: balance.available_balance,
+                            },
+                        ).await {
+                            warn!("Failed to send balance update via WebSocket: {}", e);
+                        }
+                        
+                        // Send transaction confirmed
+                        if let Err(e) = send_to_user(
+                            &state,
+                            &user_pubkey,
+                            WsEventType::TransactionConfirmed,
+                            TransactionConfirmedData {
+                                transaction_id: result.transaction_id.to_string(),
+                                transaction_type: "withdraw".to_string(),
+                                amount: amount as i64,
+                                signature: signature.clone(),
+                            },
+                        ).await {
+                            warn!("Failed to send transaction confirmed via WebSocket: {}", e);
+                        }
+                    }
+                    Err(e) => {
+                        warn!("Failed to fetch balance for WebSocket notification: {}", e);
+                    }
                 }
             }
             

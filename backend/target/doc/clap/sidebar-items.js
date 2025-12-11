@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ColorChoice"],"macro":["app_from_crate","arg","command","crate_authors","crate_description","crate_name","crate_version","value_parser"],"mod":["builder","error","parser"],"trait":["Args","CommandFactory","FromArgMatches","Parser","Subcommand","ValueEnum"]};

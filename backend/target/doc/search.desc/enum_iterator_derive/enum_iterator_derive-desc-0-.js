@@ -1,1 +1,0 @@
-searchState.loadedDescShard("enum_iterator_derive", 0, "Overview\nDerives <code>Sequence</code>.")

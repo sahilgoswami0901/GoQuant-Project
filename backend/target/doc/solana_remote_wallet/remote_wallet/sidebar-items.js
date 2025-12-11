@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["RemoteWalletError","RemoteWalletType"],"fn":["initialize_wallet_manager","is_valid_hid_device","maybe_wallet_manager"],"struct":["Device","RemoteWalletInfo","RemoteWalletManager"],"trait":["RemoteWallet"]};

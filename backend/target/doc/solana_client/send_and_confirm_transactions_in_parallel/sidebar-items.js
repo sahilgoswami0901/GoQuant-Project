@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["send_and_confirm_transactions_in_parallel","send_and_confirm_transactions_in_parallel_blocking"],"struct":["SendAndConfirmConfig"]};

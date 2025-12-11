@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_CONNECTION_POOL_SIZE"],"enum":["ClientError","ConnectionPoolError","PoolStatus","Protocol"],"struct":["ConnectionCache"],"trait":["BaseClientConnection","ConnectionManager","ConnectionPool","NewConnectionConfig"]};

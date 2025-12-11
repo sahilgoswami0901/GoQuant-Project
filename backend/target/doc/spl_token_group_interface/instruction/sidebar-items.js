@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["TokenGroupInstruction"],"fn":["initialize_group","initialize_member","update_group_authority","update_group_max_size"],"struct":["InitializeGroup","InitializeMember","UpdateGroupAuthority","UpdateGroupMaxSize"]};

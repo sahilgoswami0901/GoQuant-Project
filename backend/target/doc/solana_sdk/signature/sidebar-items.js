@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["SIGNATURE_BYTES"],"enum":["ParseSignatureError"],"struct":["Signature"],"trait":["Signable"]};
