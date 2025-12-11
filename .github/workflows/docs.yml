@@ -1,20 +1,23 @@
+# .github/workflows/deploy.yml
 name: Deploy Docusaurus to GitHub Pages
 
 on:
   push:
     branches:
-      - main  # or your default branch
+      - main  # or whichever branch is your source
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # allow pushing to gh-pages
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -22,12 +25,12 @@ jobs:
         run: npm ci
         working-directory: ./docs-site
 
-      - name: Build Docusaurus site
+      - name: Build site
         run: npm run build
         working-directory: ./docs-site
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v6
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs-site/build
